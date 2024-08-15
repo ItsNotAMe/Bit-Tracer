@@ -3,6 +3,7 @@
 #include <direct.h>
 #include <vector>
 #include <functional>
+#include <chrono>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -26,60 +27,80 @@ void RayTracer::render(const std::string& outputFile) const
 {
     std::vector<float> imageIntensities(m_imageWidth * m_imageHeight * 3);
 
+    HittableList BVHObjects = HittableList(std::make_shared<BVHNode>(m_objects));
+
+    // ThreadPool pool(std::thread::hardware_concurrency());
+    // for (int sample = 0; sample < m_samplesPerPixel; sample++)
+    // {
+    //     pool.addTask([&]() {
+    //         for (int y = 0; y < m_imageHeight; y++)
+    //         {
+    //             for (int x = 0; x < m_imageWidth; x++)
+    //             {
+    //                 Ray ray = getRay(x, y);
+    //                 Color pixelColor = rayColor(ray, BVHObjects, m_maxDepth) / m_samplesPerPixel;
+    //                 pixelColor /= m_samplesPerPixel;
+    //                 addToPixel(imageIntensities, m_imageWidth, x, y, pixelColor);
+    //             }
+    //         }
+    //         });
+    // }
+
+    // while (1)
+    // {
+    //     int remaining = pool.getQueueSize() + pool.getCountWorking();
+    //     std::clog << "\rSamples remaining: " << remaining << " Currently working on: " << pool.getCountWorking() << "  " << std::flush;
+    //     if (remaining == 0)
+    //         break;
+    //     pool.waitForUpdate();
+    // }
+
+    // std::vector<uint8_t> image(m_imageWidth * m_imageHeight * 3);
     // for (int y = 0; y < m_imageHeight; y++)
     // {
-    //     std::clog << "\rScanlines remaining: " << (m_imageHeight - y) << ' ' << std::flush;
     //     for (int x = 0; x < m_imageWidth; x++)
     //     {
-    //         Color pixelColor = { 0 };
-    //         for (int sample = 0; sample < m_samplesPerPixel; sample++)
-    //         {
-    //             Ray ray = getRay(x, y);
-
-    //             pixelColor += rayColor(ray, m_maxDepth);
-    //         }
-    //         pixelColor /= m_samplesPerPixel;
-    //         setPixel(image, m_imageWidth, x, y, pixelColor);
+    //         setPixel(image, m_imageWidth, x, y,
+    //             Color(imageIntensities[3 * (y * m_imageWidth + x)],
+    //                 imageIntensities[3 * (y * m_imageWidth + x) + 1],
+    //                 imageIntensities[3 * (y * m_imageWidth + x) + 2]));
     //     }
     // }
 
-    HittableList bvh_objects = HittableList(std::make_shared<BVHNode>(m_objects));
-
-    ThreadPool pool(4);
-    for (int sample = 0; sample < m_samplesPerPixel; sample++)
-    {
-        pool.addTask([&]() {
-            for (int y = 0; y < m_imageHeight; y++)
-            {
-                for (int x = 0; x < m_imageWidth; x++)
-                {
-                    Ray ray = getRay(x, y);
-                    Color pixelColor = rayColor(ray, m_maxDepth) / m_samplesPerPixel;
-                    pixelColor /= m_samplesPerPixel;
-                    addToPixel(imageIntensities, m_imageWidth, x, y, pixelColor);
-                }
-            }
-            });
-    }
-
-    while (1)
-    {
-        int remaining = pool.getQueueSize() + pool.getCountWorking();
-        std::clog << "\rSamples remaining: " << remaining << " Currently working on: " << pool.getCountWorking() << "  " << std::flush;
-        if (remaining == 0)
-            break;
-        pool.waitForUpdate();
-    }
-
+    // TODO: split work better between threads in case on part of the image takes longer to render
+    std::atomic<int> renderedLines = 0;
     std::vector<uint8_t> image(m_imageWidth * m_imageHeight * 3);
-    for (int y = 0; y < m_imageHeight; y++)
     {
-        for (int x = 0; x < m_imageWidth; x++)
+        int nThreads = std::thread::hardware_concurrency();
+        ThreadPool pool(nThreads);
+        for (int i = 0; i < nThreads; i++)
         {
-            setPixel(image, m_imageWidth, x, y,
-                Color(imageIntensities[3 * (y * m_imageWidth + x)],
-                    imageIntensities[3 * (y * m_imageWidth + x) + 1],
-                    imageIntensities[3 * (y * m_imageWidth + x) + 2]));
+            pool.addTask([&](int yStart, int yEnd) {
+                for (int y = yStart; y < yEnd; y++)
+                {
+                    for (int x = 0; x < m_imageWidth; x++)
+                    {
+                        Color pixelColor = { 0 };
+                        for (int sample = 0; sample < m_samplesPerPixel; sample++)
+                        {
+                            Ray ray = getRay(x, y);
+
+                            pixelColor += rayColor(ray, BVHObjects, m_maxDepth);
+                        }
+                        pixelColor /= m_samplesPerPixel;
+                        setPixel(image, m_imageWidth, x, y, pixelColor);
+                    }
+                    renderedLines++;
+                }
+                }, i * m_imageHeight / nThreads, (i + 1) == nThreads ? m_imageHeight : (i + 1) * m_imageHeight / nThreads);
+        }
+
+        while (1)
+        {
+            std::clog << "\rLines rendered: " << renderedLines << "/" << m_imageHeight << std::flush;
+            if (renderedLines == m_imageHeight)
+                break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         }
     }
 
@@ -164,18 +185,18 @@ Vec3 RayTracer::defocusDistSample() const
     return m_lookFrom + (p[0] * m_defocusDiskU) + (p[1] * m_defocusDiskV);
 }
 
-Color RayTracer::rayColor(const Ray& r, int depth) const
+Color RayTracer::rayColor(const Ray& r, HittableList& objects, int depth) const
 {
     if (depth <= 0)
         return Color(0);
 
     HitRecord rec;
-    if (m_objects.hit(r, rec, Interval(0.001f, INF)))
+    if (objects.hit(r, rec, Interval(0.001f, INF)))
     {
         Ray scattered;
         Color attenuation;
         if (rec.Mat->scatter(r, rec, attenuation, scattered))
-            return attenuation * rayColor(scattered, depth - 1);
+            return attenuation * rayColor(scattered, objects, depth - 1);
         return Color(0);
     }
 
@@ -208,15 +229,15 @@ void RayTracer::setPixel(std::vector<uint8_t>& image, int imageWidth, int x, int
     image[3 * (y * imageWidth + x) + 2] = bbyte;
 }
 
-void RayTracer::addToPixel(std::vector<float>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const
-{
-    float r = pixelColor.x();
-    float g = pixelColor.y();
-    float b = pixelColor.z();
+// void RayTracer::addToPixel(std::vector<float>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const
+// {
+//     float r = pixelColor.x();
+//     float g = pixelColor.y();
+//     float b = pixelColor.z();
 
-    // Write out the pixel color components.
-    std::scoped_lock<std::mutex> lock(s_imageMutex);
-    imageIntensities[3 * (y * imageWidth + x)] += r;
-    imageIntensities[3 * (y * imageWidth + x) + 1] += g;
-    imageIntensities[3 * (y * imageWidth + x) + 2] += b;
-}
+//     // Write out the pixel color components.
+//     std::scoped_lock<std::mutex> lock(s_imageMutex);
+//     imageIntensities[3 * (y * imageWidth + x)] += r;
+//     imageIntensities[3 * (y * imageWidth + x) + 1] += g;
+//     imageIntensities[3 * (y * imageWidth + x) + 2] += b;
+// }

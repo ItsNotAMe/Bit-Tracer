@@ -25,13 +25,17 @@ public:
         int axis = m_bbox.longestAxis();
 
         auto comparator = (axis == 0) ? boxCompareX
-                        : (axis == 1) ? boxCompareY
-                                      : boxCompareZ;
+            : (axis == 1) ? boxCompareY
+            : boxCompareZ;
 
         size_t objectSpan = end - start;
 
-        if (objectSpan == 1)
-            m_left = m_right = objects[start];
+        if (objectSpan == 3)
+        {
+            std::sort(objects.begin() + start, objects.begin() + end, comparator);
+            m_left = std::make_shared<BVHNode>(objects, start, start + 2);
+            m_right = objects[start + 2];
+        }
         else if (objectSpan == 2)
         {
             m_left = objects[start];
@@ -39,7 +43,7 @@ public:
         }
         else
         {
-            std::sort(std::begin(objects) + start, std::begin(objects) + end, comparator);
+            std::sort(objects.begin() + start, objects.begin() + end, comparator);
 
             size_t mid = start + objectSpan / 2;
             m_left = std::make_shared<BVHNode>(objects, start, mid);

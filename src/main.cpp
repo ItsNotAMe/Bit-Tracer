@@ -1,5 +1,8 @@
 #include "Common.h"
 
+#include <chrono>
+#include <iomanip>
+
 #include "RayTracer.h"
 #include "Sphere.h"
 #include "materials/Material.h"
@@ -9,6 +12,7 @@
 
 int main()
 {
+    auto begin = std::chrono::steady_clock::now();
     // RayTracerSettings settings;
     // settings.SamplesPerPixel = 100;
     // settings.MaxDepth = 50;
@@ -112,6 +116,9 @@ int main()
     tracer.addObject(std::make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
 
     tracer.render("output/final_scene.png");
+
+    auto end = std::chrono::steady_clock::now();
+    std::cout << std::fixed << std::setprecision(2) << "Time to render: " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0f << "s" << std::endl;
 
     return 0;
 }
