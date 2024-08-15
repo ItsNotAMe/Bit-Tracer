@@ -24,7 +24,7 @@ RayTracer::RayTracer(RayTracerSettings settings)
 
 void RayTracer::render(const std::string& outputFile) const
 {
-    std::vector<uint8_t> image(m_imageWidth * m_imageHeight * 3);
+    std::vector<float> imageIntensities(m_imageWidth * m_imageHeight * 3);
 
     // for (int y = 0; y < m_imageHeight; y++)
     // {
@@ -56,7 +56,7 @@ void RayTracer::render(const std::string& outputFile) const
                     Ray ray = getRay(x, y);
                     Color pixelColor = rayColor(ray, m_maxDepth) / m_samplesPerPixel;
                     pixelColor /= m_samplesPerPixel;
-                    addToPixel(image, m_imageWidth, x, y, pixelColor);
+                    addToPixel(imageIntensities, m_imageWidth, x, y, pixelColor);
                 }
             }
             });
@@ -65,16 +65,28 @@ void RayTracer::render(const std::string& outputFile) const
     while (1)
     {
         int remaining = pool.getQueueSize() + pool.getCountWorking();
-        std::clog << "\rSamples remaining: " << remaining << " Currently working on: " << pool.getCountWorking() << std::flush;
+        std::clog << "\rSamples remaining: " << remaining << " Currently working on: " << pool.getCountWorking() << "  " << std::flush;
         if (remaining == 0)
             break;
         pool.waitForUpdate();
     }
 
+    std::vector<uint8_t> image(m_imageWidth * m_imageHeight * 3);
+    for (int y = 0; y < m_imageHeight; y++)
+    {
+        for (int x = 0; x < m_imageWidth; x++)
+        {
+            setPixel(image, m_imageWidth, x, y,
+                Color(imageIntensities[3 * (y * m_imageWidth + x)],
+                    imageIntensities[3 * (y * m_imageWidth + x) + 1],
+                    imageIntensities[3 * (y * m_imageWidth + x) + 2]));
+        }
+    }
+
     _mkdir("output");
     stbi_write_png(outputFile.c_str(), m_imageWidth, m_imageHeight, 3, image.data(), m_imageWidth * 3);
 
-    std::clog << "\rDone.                 \n";
+    std::clog << "\rDone.                                        \n";
 }
 
 void RayTracer::setSettings(RayTracerSettings settings)
@@ -190,32 +202,21 @@ void RayTracer::setPixel(std::vector<uint8_t>& image, int imageWidth, int x, int
     int bbyte = int(256 * intensity.clamp(b));
 
     // Write out the pixel color components.
-    std::scoped_lock<std::mutex> lock(s_imageMutex);
+    // std::scoped_lock<std::mutex> lock(s_imageMutex);
     image[3 * (y * imageWidth + x)] = rbyte;
     image[3 * (y * imageWidth + x) + 1] = gbyte;
     image[3 * (y * imageWidth + x) + 2] = bbyte;
 }
 
-void RayTracer::addToPixel(std::vector<uint8_t>& image, int imageWidth, int x, int y, const Color& pixelColor) const
+void RayTracer::addToPixel(std::vector<float>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const
 {
     float r = pixelColor.x();
     float g = pixelColor.y();
     float b = pixelColor.z();
 
-    // Apply a linear to gamma transform for gamma 2
-    r = linearToGamma(r);
-    g = linearToGamma(g);
-    b = linearToGamma(b);
-
-    // Translate the [0,1] component values to the byte range [0,255].
-    static const Interval intensity(0.000f, 0.999f);
-    int rbyte = int(256 * intensity.clamp(r));
-    int gbyte = int(256 * intensity.clamp(g));
-    int bbyte = int(256 * intensity.clamp(b));
-
     // Write out the pixel color components.
     std::scoped_lock<std::mutex> lock(s_imageMutex);
-    image[3 * (y * imageWidth + x)] += rbyte + image[3 * (y * imageWidth + x)] > 255 ? image[3 * (y * imageWidth + x)] - 255 : rbyte;
-    image[3 * (y * imageWidth + x) + 1] += gbyte + image[3 * (y * imageWidth + x) + 1] > 255 ? image[3 * (y * imageWidth + x) + 1] - 255 : gbyte;
-    image[3 * (y * imageWidth + x) + 2] += bbyte + image[3 * (y * imageWidth + x) + 2] > 255 ? image[3 * (y * imageWidth + x) + 2] - 255 : bbyte;
+    imageIntensities[3 * (y * imageWidth + x)] += r;
+    imageIntensities[3 * (y * imageWidth + x) + 1] += g;
+    imageIntensities[3 * (y * imageWidth + x) + 2] += b;
 }
