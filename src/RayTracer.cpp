@@ -25,10 +25,9 @@ RayTracer::RayTracer(RayTracerSettings settings)
 
 void RayTracer::render(const std::string& outputFile) const
 {
-    std::vector<float> imageIntensities(m_imageWidth * m_imageHeight * 3);
-
     HittableList BVHObjects = HittableList(std::make_shared<BVHNode>(m_objects));
 
+    // std::vector<float> imageIntensities(m_imageWidth * m_imageHeight * 3);
     // ThreadPool pool(std::thread::hardware_concurrency());
     // for (int sample = 0; sample < m_samplesPerPixel; sample++)
     // {

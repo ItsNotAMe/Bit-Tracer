@@ -30,7 +30,9 @@ public:
 
         size_t objectSpan = end - start;
 
-        if (objectSpan == 3)
+        if (objectSpan == 1)
+            m_left = m_right = objects[start];
+        else if (objectSpan == 3)
         {
             std::sort(objects.begin() + start, objects.begin() + end, comparator);
             m_left = std::make_shared<BVHNode>(objects, start, start + 2);
