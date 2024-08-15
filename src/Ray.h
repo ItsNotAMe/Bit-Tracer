@@ -1,4 +1,5 @@
 #pragma once
+#include "Utility.h"
 
 #include "Vec3.h"
 
@@ -11,7 +12,7 @@ public:
     const Point3& origin() const { return m_orig; }
     const Vec3& direction() const { return m_dir; }
 
-    Point3 at(double t)
+    Point3 at(float t) const
     {
         return m_orig + t * m_dir;
     }

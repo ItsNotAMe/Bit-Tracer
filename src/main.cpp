@@ -1,67 +1,117 @@
-#include <iostream>
-#include <direct.h>
-#include <vector>
+#include "Common.h"
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image_write.h>
-
-#include "Vec3.h"
-#include "Color.h"
-#include "Ray.h"
-
-Color rayColor(const Ray &r)
-{
-    Vec3 unitDirection = unitVector(r.direction());
-    float a = 0.5 * (unitDirection.y() + 1.0);
-    return (1.0 - a) * Color(1.0, 1.0, 1.0) + a * Color(0.5, 0.7, 1.0);
-}
+#include "RayTracer.h"
+#include "Sphere.h"
+#include "materials/Material.h"
+#include "materials/Lambertian.h"
+#include "materials/Metal.h"
+#include "materials/Dielectric.h"
 
 int main()
 {
-    float aspectRatio = 16.0f / 9.0f;
-    int imageWidth = 400;
+    // RayTracerSettings settings;
+    // settings.SamplesPerPixel = 100;
+    // settings.MaxDepth = 50;
+    // settings.LookFrom = Point3(-2, 2, 1);
+    // settings.LookAt = Point3(0, 0, -1);
+    // settings.UpVec = Vec3(0, 1, 0);
+    // settings.VFOV = 20;
+    // settings.DefocusAngle = 10.0;
+    // settings.FocusDistance = 3.4;
+    // RayTracer tracer(settings);
 
-    // Calculate the image height, and ensure that it's at least 1.
-    int imageHeight = int(imageWidth / aspectRatio);
-    imageHeight = (imageHeight < 1) ? 1 : imageHeight;
+    // auto materialGround = std::make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
+    // auto materialCenter = std::make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
+    // auto materialLeft = std::make_shared<Dielectric>(1.5);
+    // auto materialBubble = std::make_shared<Dielectric>(1.00 / 1.50);
+    // auto materialRight = std::make_shared<Metal>(Color(0.8, 0.6, 0.2), 1.0);
 
-    // Viewport widths less than one are ok since they are real valued.
-    float focalLength = 1.0f;
-    float viewportHeight = 2.0f;
-    float viewportWidth = viewportHeight * (float(imageWidth) / imageHeight);
-    Point3 cameraPos = {0};
+    // tracer.addObject(std::make_shared<Sphere>(Point3(0.0, -100.5, -1.0), 100.0, materialGround));
+    // tracer.addObject(std::make_shared<Sphere>(Point3(0.0, 0.0, -1.2), 0.5, materialCenter));
+    // tracer.addObject(std::make_shared<Sphere>(Point3(-1.0, 0.0, -1.0), 0.5, materialLeft));
+    // tracer.addObject(std::make_shared<Sphere>(Point3(-1.0, 0.0, -1.0), 0.4, materialBubble));
+    // tracer.addObject(std::make_shared<Sphere>(Point3(1.0, 0.0, -1.0), 0.5, materialRight));
 
-    // Calculate the vectors across the horizontal and down the vertical viewport edges.
-    auto viewportU = Vec3(viewportWidth, 0, 0);
-    auto viewportV = Vec3(0, -viewportHeight, 0);
+    // tracer.render("output/example1.png");
 
-    // Calculate the horizontal and vertical delta vectors from pixel to pixel.
-    auto pixelDeltaU = viewportU / imageWidth;
-    auto pixelDeltaV = viewportV / imageHeight;
 
-    // Calculate the location of the upper left pixel.
-    auto viewportUpperLeft = cameraPos - Vec3(0, 0, focalLength) - viewportU / 2 - viewportV / 2;
-    auto pixel00Loc = viewportUpperLeft + 0.5 * (pixelDeltaU + pixelDeltaV);
 
-    std::vector<uint8_t> image(imageWidth * imageHeight * 3);
+    // RayTracerSettings settings;
+    // RayTracer tracer(settings);
 
-    for (int y = 0; y < imageHeight; y++)
+    // float R = std::cos(PI/4);
+
+    // auto material_left  = std::make_shared<Lambertian>(Color(0,0,1));
+    // auto material_right = std::make_shared<Lambertian>(Color(1,0,0));
+
+    // tracer.addObject(std::make_shared<Sphere>(Point3(-R, 0, -1), R, material_left));
+    // tracer.addObject(std::make_shared<Sphere>(Point3( R, 0, -1), R, material_right));
+
+    // tracer.render("output/example2.png");
+
+
+
+    RayTracerSettings settings;
+    settings.Width = 1200;
+    settings.SamplesPerPixel = 500;
+    settings.MaxDepth = 50;
+    settings.VFOV = 20;
+    settings.LookFrom = Point3(13,2,3);
+    settings.LookAt = Point3(0,0,0);
+    settings.UpVec = Vec3(0,1,0);
+    settings.DefocusAngle = 0.6f;
+    settings.FocusDistance = 10.0f;
+    RayTracer tracer(settings);
+
+    auto groundMaterial = std::make_shared<Lambertian>(Color(0.5, 0.5, 0.5));
+    tracer.addObject(std::make_shared<Sphere>(Point3(0, -1000, 0), 1000, groundMaterial));
+
+    for (int a = -11; a < 11; a++)
     {
-        std::clog << "\rScanlines remaining: " << (imageHeight - y) << ' ' << std::flush;
-        for (int x = 0; x < imageWidth; x++)
+        for (int b = -11; b < 11; b++)
         {
-            Point3 pixelPos = pixel00Loc + (x * pixelDeltaU) + (y * pixelDeltaV);
-            auto rayDirection = pixelPos - cameraPos;
-            Ray ray(cameraPos, rayDirection);
+            auto chooseMat = randomFloat();
+            Point3 center(a + 0.9 * randomFloat(), 0.2, b + 0.9 * randomFloat());
 
-            Color pixelColor = rayColor(ray);
-            setPixel(image, imageWidth, x, y, pixelColor);
+            if ((center - Point3(4, 0.2, 0)).length() > 0.9)
+            {
+                std::shared_ptr<Material> sphereMaterial;
+
+                if (chooseMat < 0.8)
+                {
+                    // diffuse
+                    auto albedo = Color::random() * Color::random();
+                    sphereMaterial = std::make_shared<Lambertian>(albedo);
+                    tracer.addObject(std::make_shared<Sphere>(center, 0.2, sphereMaterial));
+                }
+                else if (chooseMat < 0.95)
+                {
+                    // metal
+                    auto albedo = Color::random(0.5, 1);
+                    auto fuzz = randomFloat(0, 0.5);
+                    sphereMaterial = std::make_shared<Metal>(albedo, fuzz);
+                    tracer.addObject(std::make_shared<Sphere>(center, 0.2, sphereMaterial));
+                }
+                else
+                {
+                    // glass
+                    sphereMaterial = std::make_shared<Dielectric>(1.5);
+                    tracer.addObject(std::make_shared<Sphere>(center, 0.2, sphereMaterial));
+                }
+            }
         }
     }
 
-    _mkdir("output");
-    stbi_write_png("output/image.png", imageWidth, imageHeight, 3, image.data(), imageWidth * 3);
+    auto material1 = std::make_shared<Dielectric>(1.5);
+    tracer.addObject(std::make_shared<Sphere>(Point3(0, 1, 0), 1.0, material1));
 
-    std::clog << "\rDone.                 \n";
+    auto material2 = std::make_shared<Lambertian>(Color(0.4, 0.2, 0.1));
+    tracer.addObject(std::make_shared<Sphere>(Point3(-4, 1, 0), 1.0, material2));
+
+    auto material3 = std::make_shared<Metal>(Color(0.7, 0.6, 0.5), 0.0);
+    tracer.addObject(std::make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
+
+    tracer.render("output/final_scene.png");
+
     return 0;
 }
