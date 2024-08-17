@@ -15,6 +15,7 @@ struct RayTracerSettings
     float AspectRatio = 16.0f / 9.0f;
     int SamplesPerPixel = 10;
     int MaxDepth = 10;
+    Color Background = Color(0);
     float DefocusAngle = 0; // Variation angle of rays through each pixel
     float FocusDistance = 10; // Distance from camera lookfrom point to plane of perfect focus
 };
@@ -45,6 +46,8 @@ private:
 
     int m_samplesPerPixel;
     int m_maxDepth;
+
+    Color m_background;
 
     Point3 m_pixel00Loc; // Location of pixel 0, 0
     Vec3 m_pixelDeltaU; // Offset to pixel to the right

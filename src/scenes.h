@@ -10,6 +10,7 @@
 #include "materials/Lambertian.h"
 #include "materials/Metal.h"
 #include "materials/Dielectric.h"
+#include "materials/DiffuseLight.h"
 
 void example1()
 {
@@ -20,6 +21,7 @@ void example1()
     settings.Camera.LookAt = Point3(0, 0, -1);
     settings.Camera.UpVec = Vec3(0, 1, 0);
     settings.Camera.VFOV = 20;
+    settings.Background = Color(0.70, 0.80, 1.00);
     settings.DefocusAngle = 10.0;
     settings.FocusDistance = 3.4;
     RayTracer tracer(settings);
@@ -42,6 +44,7 @@ void example1()
 void example2()
 {
     RayTracerSettings settings;
+    settings.Background = Color(0.70, 0.80, 1.00);
     RayTracer tracer(settings);
 
     float R = std::cos(PI / 4);
@@ -65,6 +68,7 @@ void finalScene()
     settings.Camera.LookFrom = Point3(13, 2, 3);
     settings.Camera.LookAt = Point3(0, 0, 0);
     settings.Camera.UpVec = Vec3(0, 1, 0);
+    settings.Background = Color(0.70, 0.80, 1.00);
     settings.DefocusAngle = 0.6f;
     settings.FocusDistance = 10.0f;
     RayTracer tracer(settings);
@@ -130,6 +134,7 @@ void bouncingBalls()
     settings.Camera.LookFrom = Point3(13, 2, 3);
     settings.Camera.LookAt = Point3(0, 0, 0);
     settings.Camera.UpVec = Vec3(0, 1, 0);
+    settings.Background = Color(0.70, 0.80, 1.00);
     settings.DefocusAngle = 0.6f;
     settings.FocusDistance = 10.0f;
     RayTracer tracer(settings);
@@ -196,6 +201,7 @@ void checkeredSpheres()
     settings.Camera.LookFrom = Point3(13, 2, 3);
     settings.Camera.LookAt = Point3(0, 0, 0);
     settings.Camera.UpVec = Vec3(0, 1, 0);
+    settings.Background = Color(0.70, 0.80, 1.00);
     RayTracer tracer(settings);
 
     auto checker = std::make_shared<CheckerTexture>(0.32, Color(.2, .3, .1), Color(.9, .9, .9));
@@ -216,6 +222,7 @@ void earth()
     settings.Camera.LookFrom = Point3(0, 0, 12);
     settings.Camera.LookAt = Point3(0, 0, 0);
     settings.Camera.UpVec = Vec3(0, 1, 0);
+    settings.Background = Color(0.70, 0.80, 1.00);
     RayTracer tracer(settings);
 
     auto earthTexture = std::make_shared<ImageTexture>("earthmap.jpg");
@@ -236,6 +243,7 @@ void imageSphere(const std::string& imagePath)
     settings.Camera.LookFrom = Point3(12, 0, 0);
     settings.Camera.LookAt = Point3(0, 0, 0);
     settings.Camera.UpVec = Vec3(0, 1, 0);
+    settings.Background = Color(0.70, 0.80, 1.00);
     RayTracer tracer(settings);
 
     auto earthTexture = std::make_shared<ImageTexture>(imagePath);
@@ -243,7 +251,7 @@ void imageSphere(const std::string& imagePath)
     auto globe = std::make_shared<Sphere>(Point3(0, 0, 0), 2, earthSurface);
     tracer.addObject(globe);
 
-    tracer.render("output/imageSphere.png");
+    tracer.render("output/image_sphere.png");
 }
 
 void perlinSpheres()
@@ -256,11 +264,12 @@ void perlinSpheres()
     settings.Camera.LookFrom = Point3(13, 2, 3);
     settings.Camera.LookAt = Point3(0, 0, 0);
     settings.Camera.UpVec = Vec3(0, 1, 0);
+    settings.Background = Color(0.70, 0.80, 1.00);
     RayTracer tracer(settings);
 
     auto pertext = std::make_shared<NoiseTexture>(4);
-    tracer.addObject(std::make_shared<Sphere>(Point3(0,-1000,0), 1000, std::make_shared<Lambertian>(pertext)));
-    tracer.addObject(std::make_shared<Sphere>(Point3(0,2,0), 2, std::make_shared<Lambertian>(pertext)));
+    tracer.addObject(std::make_shared<Sphere>(Point3(0, -1000, 0), 1000, std::make_shared<Lambertian>(pertext)));
+    tracer.addObject(std::make_shared<Sphere>(Point3(0, 2, 0), 2, std::make_shared<Lambertian>(pertext)));
 
     tracer.render("output/perlin_spheres.png");
 }
@@ -276,21 +285,76 @@ void quads()
     settings.Camera.LookFrom = Point3(0, 0, 9);
     settings.Camera.LookAt = Point3(0, 0, 0);
     settings.Camera.UpVec = Vec3(0, 1, 0);
+    settings.Background = Color(0.70, 0.80, 1.00);
     RayTracer tracer(settings);
 
     // Materials
-    auto left_red     = std::make_shared<Lambertian>(Color(1.0, 0.2, 0.2));
-    auto back_green   = std::make_shared<Lambertian>(Color(0.2, 1.0, 0.2));
-    auto right_blue   = std::make_shared<Lambertian>(Color(0.2, 0.2, 1.0));
+    auto left_red = std::make_shared<Lambertian>(Color(1.0, 0.2, 0.2));
+    auto back_green = std::make_shared<Lambertian>(Color(0.2, 1.0, 0.2));
+    auto right_blue = std::make_shared<Lambertian>(Color(0.2, 0.2, 1.0));
     auto upper_orange = std::make_shared<Lambertian>(Color(1.0, 0.5, 0.0));
-    auto lower_teal   = std::make_shared<Lambertian>(Color(0.2, 0.8, 0.8));
+    auto lower_teal = std::make_shared<Lambertian>(Color(0.2, 0.8, 0.8));
 
     // Quads
-    tracer.addObject(std::make_shared<Quad>(Point3(-3,-2, 5), Vec3(0, 0,-4), Vec3(0, 4, 0), left_red));
-    tracer.addObject(std::make_shared<Quad>(Point3(-2,-2, 0), Vec3(4, 0, 0), Vec3(0, 4, 0), back_green));
-    tracer.addObject(std::make_shared<Quad>(Point3( 3,-2, 1), Vec3(0, 0, 4), Vec3(0, 4, 0), right_blue));
+    tracer.addObject(std::make_shared<Quad>(Point3(-3, -2, 5), Vec3(0, 0, -4), Vec3(0, 4, 0), left_red));
+    tracer.addObject(std::make_shared<Quad>(Point3(-2, -2, 0), Vec3(4, 0, 0), Vec3(0, 4, 0), back_green));
+    tracer.addObject(std::make_shared<Quad>(Point3(3, -2, 1), Vec3(0, 0, 4), Vec3(0, 4, 0), right_blue));
     tracer.addObject(std::make_shared<Quad>(Point3(-2, 3, 1), Vec3(4, 0, 0), Vec3(0, 0, 4), upper_orange));
-    tracer.addObject(std::make_shared<Quad>(Point3(-2,-3, 5), Vec3(4, 0, 0), Vec3(0, 0,-4), lower_teal));
+    tracer.addObject(std::make_shared<Quad>(Point3(-2, -3, 5), Vec3(4, 0, 0), Vec3(0, 0, -4), lower_teal));
 
     tracer.render("output/quads.png");
+}
+
+void simpleLight()
+{
+    RayTracerSettings settings;
+    settings.Width = 400;
+    settings.SamplesPerPixel = 100;
+    settings.MaxDepth = 50;
+    settings.Camera.VFOV = 20;
+    settings.Camera.LookFrom = Point3(26, 3, 6);
+    settings.Camera.LookAt = Point3(0, 2, 0);
+    settings.Camera.UpVec = Vec3(0, 1, 0);
+    RayTracer tracer(settings);
+
+    auto pertext = std::make_shared<NoiseTexture>(4);
+    tracer.addObject(std::make_shared<Sphere>(Point3(0,-1000,0), 1000, std::make_shared<Lambertian>(pertext)));
+    tracer.addObject(std::make_shared<Sphere>(Point3(0,2,0), 2, std::make_shared<Lambertian>(pertext)));
+
+    auto difflight = std::make_shared<DiffuseLight>(Color(4,4,4));
+    tracer.addObject(std::make_shared<Sphere>(Point3(0,7,0), 2, difflight));
+    tracer.addObject(std::make_shared<Quad>(Point3(3,1,-2), Vec3(2,0,0), Vec3(0,2,0), difflight));
+
+    tracer.render("output/simple_light.png");
+}
+
+void cornellBox()
+{
+    RayTracerSettings settings;
+    settings.AspectRatio = 1.0f;
+    settings.Width = 600;
+    settings.SamplesPerPixel = 200;
+    settings.MaxDepth = 50;
+    settings.Camera.VFOV = 40;
+    settings.Camera.LookFrom = Point3(278, 278, -800);
+    settings.Camera.LookAt = Point3(278, 278, 0);
+    settings.Camera.UpVec = Vec3(0, 1, 0);
+    RayTracer tracer(settings);
+
+    auto red   = std::make_shared<Lambertian>(Color(.65, .05, .05));
+    auto white = std::make_shared<Lambertian>(Color(.73, .73, .73));
+    auto green = std::make_shared<Lambertian>(Color(.12, .45, .15));
+    auto light = std::make_shared<DiffuseLight>(Color(15, 15, 15));
+
+    tracer.addObject(std::make_shared<Quad>(Point3(555,0,0), Vec3(0,555,0), Vec3(0,0,555), green));
+    tracer.addObject(std::make_shared<Quad>(Point3(0,0,0), Vec3(0,555,0), Vec3(0,0,555), red));
+    tracer.addObject(std::make_shared<Quad>(Point3(343, 554, 332), Vec3(-130,0,0), Vec3(0,0,-105), light));
+    tracer.addObject(std::make_shared<Quad>(Point3(0,0,0), Vec3(555,0,0), Vec3(0,0,555), white));
+    tracer.addObject(std::make_shared<Quad>(Point3(555,555,555), Vec3(-555,0,0), Vec3(0,0,-555), white));
+    tracer.addObject(std::make_shared<Quad>(Point3(0,0,555), Vec3(555,0,0), Vec3(0,555,0), white));
+
+    // tracer.addObject(box(Point3(130, 0, 65), Point3(295, 165, 230), white));
+    // tracer.addObject(box(Point3(265, 0, 295), Point3(430, 330, 460), white));
+
+    tracer.render("output/cornell_box.png");
 }

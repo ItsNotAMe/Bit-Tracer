@@ -16,7 +16,7 @@ std::mutex RayTracer::s_imageMutex;
 
 RayTracer::RayTracer(RayTracerSettings settings)
     : m_aspectRatio(settings.AspectRatio), m_imageWidth(settings.Width), m_camera(settings.Camera),
-    m_samplesPerPixel(settings.SamplesPerPixel), m_maxDepth(settings.MaxDepth),
+    m_samplesPerPixel(settings.SamplesPerPixel), m_maxDepth(settings.MaxDepth), m_background(settings.Background),
     m_defocusAngle(settings.DefocusAngle), m_focusDistance(settings.FocusDistance)
 {
     initialize();
@@ -114,6 +114,9 @@ void RayTracer::setSettings(RayTracerSettings settings)
     m_camera = settings.Camera;
     m_samplesPerPixel = settings.SamplesPerPixel;
     m_maxDepth = settings.MaxDepth;
+    m_background = settings.Background;
+    m_defocusAngle = settings.DefocusAngle;
+    m_focusDistance = settings.FocusDistance;
     initialize();
 }
 
@@ -186,18 +189,21 @@ Color RayTracer::rayColor(const Ray& r, Hittable& objects, int depth) const
         return Color(0);
 
     HitRecord rec;
-    if (objects.hit(r, rec, Interval(0.001f, INF)))
-    {
-        Ray scattered;
-        Color attenuation;
-        if (rec.Mat->scatter(r, rec, attenuation, scattered))
-            return attenuation;// * rayColor(scattered, objects, depth - 1);
-        return Color(0);
-    }
 
-    Vec3 unitDirection = unitVector(r.direction());
-    float a = 0.5 * (unitDirection.y() + 1.0);
-    return (1.0 - a) * Color(1.0, 1.0, 1.0) + a * Color(0.5, 0.7, 1.0);
+    // If the ray hits nothing, return the background color.
+    if (!objects.hit(r, rec, Interval(0.001, INF)))
+        return m_background;
+
+    Ray scattered;
+    Color attenuation;
+    Color emissionColor = rec.Mat->emitted(rec.u, rec.v, rec.Point);
+
+    if (!rec.Mat->scatter(r, rec, attenuation, scattered))
+        return emissionColor;
+
+    Color scatterColor = attenuation * rayColor(scattered, objects, depth - 1);
+
+    return emissionColor + scatterColor;
 }
 
 void RayTracer::setPixel(std::vector<uint8_t>& image, int imageWidth, int x, int y, const Color& pixelColor) const
