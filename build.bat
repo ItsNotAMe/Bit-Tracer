@@ -1,4 +1,3 @@
-if not exist build ( mkdir build )
+cmake -G "MinGW Makefiles" . -B ./build
 cd build
-cmake -G "MinGW Makefiles" ..
-make -j5
+make

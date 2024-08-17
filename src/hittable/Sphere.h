@@ -8,6 +8,7 @@ class Sphere : public Hittable
 {
 public:
     Sphere(const Point3& center, float radius, std::shared_ptr<Material> mat);
+    Sphere(const Point3& center1, const Point3& center2, float radius, std::shared_ptr<Material> mat);
 
     bool hit(const Ray& r, HitRecord& rec, Interval tRange) const override;
 
@@ -17,4 +18,8 @@ private:
     float m_radius;
     std::shared_ptr<Material> m_mat;
     AABB m_bbox;
+    
+    // motion blur
+    Vec3 m_centerMoveDir;
+    bool m_isMoving;
 };

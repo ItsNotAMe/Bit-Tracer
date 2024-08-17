@@ -2,7 +2,7 @@
 #include "Common.h"
 
 #include "Material.h"
-#include "Hittable.h"
+#include "hittable/Hittable.h"
 
 class Lambertian : public Material
 {
