@@ -8,7 +8,7 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
-#include "ThreadPool.h"
+#include "core/ThreadPool.h"
 #include "materials/Material.h"
 #include "hittable/BVH.h"
 

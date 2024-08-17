@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Utility.h"
-#include "Vec3.h"
-#include "Color.h"
-#include "Ray.h"
-#include "Interval.h"
+#include "core/Utility.h"
+#include "core/Vec3.h"
+#include "core/Color.h"
+#include "core/Ray.h"
+#include "core/Interval.h"

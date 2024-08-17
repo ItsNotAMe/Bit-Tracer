@@ -2,7 +2,7 @@
 #include "Common.h"
 
 #include "Texture.h"
-#include "BitImage.h"
+#include "core/BitImage.h"
 
 class ImageTexture : public Texture
 {
