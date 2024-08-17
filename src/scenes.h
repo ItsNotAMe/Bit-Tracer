@@ -2,8 +2,10 @@
 
 #include "RayTracer.h"
 #include "hittable/Sphere.h"
+#include "hittable/Quad.h"
 #include "texture/CheckerTexture.h"
 #include "texture/ImageTexture.h"
+#include "texture/NoiseTexture.h"
 #include "materials/Material.h"
 #include "materials/Lambertian.h"
 #include "materials/Metal.h"
@@ -242,4 +244,53 @@ void imageSphere(const std::string& imagePath)
     tracer.addObject(globe);
 
     tracer.render("output/imageSphere.png");
+}
+
+void perlinSpheres()
+{
+    RayTracerSettings settings;
+    settings.Width = 400;
+    settings.SamplesPerPixel = 100;
+    settings.MaxDepth = 50;
+    settings.Camera.VFOV = 20;
+    settings.Camera.LookFrom = Point3(13, 2, 3);
+    settings.Camera.LookAt = Point3(0, 0, 0);
+    settings.Camera.UpVec = Vec3(0, 1, 0);
+    RayTracer tracer(settings);
+
+    auto pertext = std::make_shared<NoiseTexture>(4);
+    tracer.addObject(std::make_shared<Sphere>(Point3(0,-1000,0), 1000, std::make_shared<Lambertian>(pertext)));
+    tracer.addObject(std::make_shared<Sphere>(Point3(0,2,0), 2, std::make_shared<Lambertian>(pertext)));
+
+    tracer.render("output/perlin_spheres.png");
+}
+
+void quads()
+{
+    RayTracerSettings settings;
+    settings.AspectRatio = 1.0f;
+    settings.Width = 400;
+    settings.SamplesPerPixel = 100;
+    settings.MaxDepth = 50;
+    settings.Camera.VFOV = 80;
+    settings.Camera.LookFrom = Point3(0, 0, 9);
+    settings.Camera.LookAt = Point3(0, 0, 0);
+    settings.Camera.UpVec = Vec3(0, 1, 0);
+    RayTracer tracer(settings);
+
+    // Materials
+    auto left_red     = std::make_shared<Lambertian>(Color(1.0, 0.2, 0.2));
+    auto back_green   = std::make_shared<Lambertian>(Color(0.2, 1.0, 0.2));
+    auto right_blue   = std::make_shared<Lambertian>(Color(0.2, 0.2, 1.0));
+    auto upper_orange = std::make_shared<Lambertian>(Color(1.0, 0.5, 0.0));
+    auto lower_teal   = std::make_shared<Lambertian>(Color(0.2, 0.8, 0.8));
+
+    // Quads
+    tracer.addObject(std::make_shared<Quad>(Point3(-3,-2, 5), Vec3(0, 0,-4), Vec3(0, 4, 0), left_red));
+    tracer.addObject(std::make_shared<Quad>(Point3(-2,-2, 0), Vec3(4, 0, 0), Vec3(0, 4, 0), back_green));
+    tracer.addObject(std::make_shared<Quad>(Point3( 3,-2, 1), Vec3(0, 0, 4), Vec3(0, 4, 0), right_blue));
+    tracer.addObject(std::make_shared<Quad>(Point3(-2, 3, 1), Vec3(4, 0, 0), Vec3(0, 0, 4), upper_orange));
+    tracer.addObject(std::make_shared<Quad>(Point3(-2,-3, 5), Vec3(4, 0, 0), Vec3(0, 0,-4), lower_teal));
+
+    tracer.render("output/quads.png");
 }

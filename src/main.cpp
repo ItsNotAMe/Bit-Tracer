@@ -9,7 +9,7 @@ int main()
 {
     auto begin = std::chrono::steady_clock::now();
 
-    switch (7)
+    switch (9)
     {
         case 1: example1();  break;
         case 2: example2(); break;
@@ -18,6 +18,8 @@ int main()
         case 5: checkeredSpheres(); break;
         case 6: earth(); break;
         case 7: imageSphere("thinking.png"); break;
+        case 8: perlinSpheres(); break;
+        case 9: quads(); break;
     }
 
     auto end = std::chrono::steady_clock::now();
