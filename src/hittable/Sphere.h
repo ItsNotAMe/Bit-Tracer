@@ -14,6 +14,8 @@ public:
 
     AABB boundingBox() const override { return m_bbox; }
 private:
+    static void getSphereUV(const Point3& p, float& u, float& v);
+private:
     Point3 m_center;
     float m_radius;
     std::shared_ptr<Material> m_mat;

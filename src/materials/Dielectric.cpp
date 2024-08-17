@@ -21,10 +21,10 @@ bool Dielectric::scatter(const Ray& rayIn, const HitRecord& rec, Color& attenuat
     return true;
 }
 
-float Dielectric::reflectance(double cosine, double refraction_index)
+float Dielectric::reflectance(double cosine, double refractionIndex)
 {
     // Use Schlick's approximation for reflectance.
-    float r0 = (1 - refraction_index) / (1 + refraction_index);
+    float r0 = (1 - refractionIndex) / (1 + refractionIndex);
     r0 = r0 * r0;
     return r0 + (1 - r0) * std::pow((1 - cosine), 5);
 }

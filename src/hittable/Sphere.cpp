@@ -29,7 +29,7 @@ bool Sphere::hit(const Ray& r, HitRecord& rec, Interval tRange) const
 
     if (discriminant < 0)
         return false;
-    
+
     float sqrtd = std::sqrt(discriminant);
 
     float t = (h - sqrtd) / a;
@@ -45,6 +45,15 @@ bool Sphere::hit(const Ray& r, HitRecord& rec, Interval tRange) const
     rec.Mat = m_mat;
     Vec3 outwardNormal = (rec.Point - center) / m_radius;
     rec.setFaceNormal(r, outwardNormal);
+    getSphereUV((rec.Point - m_center) / m_radius, rec.u, rec.v);
 
     return true;
+}
+
+void Sphere::getSphereUV(const Point3& p, float& u, float& v)
+{
+    float phi = std::atan2(-p.z(), p.x()) + PI;
+    float theta = std::acos(-p.y());
+    u = phi / (2 * PI);
+    v = theta / PI;
 }

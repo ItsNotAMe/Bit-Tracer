@@ -180,7 +180,7 @@ Vec3 RayTracer::defocusDistSample() const
     return m_camera.LookFrom + (p[0] * m_defocusDiskU) + (p[1] * m_defocusDiskV);
 }
 
-Color RayTracer::rayColor(const Ray& r, HittableList& objects, int depth) const
+Color RayTracer::rayColor(const Ray& r, Hittable& objects, int depth) const
 {
     if (depth <= 0)
         return Color(0);
@@ -191,7 +191,7 @@ Color RayTracer::rayColor(const Ray& r, HittableList& objects, int depth) const
         Ray scattered;
         Color attenuation;
         if (rec.Mat->scatter(r, rec, attenuation, scattered))
-            return attenuation * rayColor(scattered, objects, depth - 1);
+            return attenuation;// * rayColor(scattered, objects, depth - 1);
         return Color(0);
     }
 

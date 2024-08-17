@@ -33,7 +33,7 @@ private:
     Ray getRay(int x, int y) const;
     Vec3 sampleSquare() const;
     Vec3 defocusDistSample() const;
-    Color rayColor(const Ray& r, HittableList& objects, int depth) const;
+    Color rayColor(const Ray& r, Hittable& objects, int depth) const;
     void setPixel(std::vector<uint8_t>& image, int imageWidth, int x, int y, const Color& pixelColor) const;
     void addToPixel(std::vector<float>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const;
 private:
