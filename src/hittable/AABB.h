@@ -30,5 +30,12 @@ private:
     Interval m_x, m_y, m_z;
 };
 
-AABB operator+(const AABB& bbox, const Vec3& offset);
-AABB operator+(const Vec3& offset, const AABB& bbox);
+inline AABB operator+(const AABB& bbox, const Vec3& offset)
+{
+    return AABB(bbox.x() + offset.x(), bbox.y() + offset.y(), bbox.z() + offset.z());
+}
+
+inline AABB operator+(const Vec3& offset, const AABB& bbox)
+{
+    return bbox + offset;
+}

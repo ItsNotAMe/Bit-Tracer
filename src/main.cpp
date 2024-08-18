@@ -9,6 +9,7 @@ int main()
 {
     auto begin = std::chrono::steady_clock::now();
 
+    // TODO: add command line argument
     switch (14)
     {
         case 1: example1();  break;

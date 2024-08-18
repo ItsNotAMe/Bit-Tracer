@@ -17,13 +17,3 @@ Interval Interval::expand(float delta) const
     float padding = delta / 2;
     return Interval(m_min - padding, m_max + padding);
 }
-
-Interval operator+(const Interval& interval, float displacement)
-{
-    return Interval(interval.min() + displacement, interval.max() + displacement);
-}
-
-Interval operator+(float displacement, const Interval& interval)
-{
-    return interval + displacement;
-}

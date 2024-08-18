@@ -130,8 +130,8 @@ void RayTracer::render(const std::string& outputFile) const
 
         int prevRenderedLines = 0;
         int prevRenderedPixels = 0;
-        int avgTimeLines = 0;
-        int avgTimePixels = 0;
+        uint64_t avgTimeLines = 0;
+        uint64_t avgTimePixels = 0;
         std::clog << "\n\n\n\n\n\n";
         while (1)
         {
@@ -147,11 +147,11 @@ void RayTracer::render(const std::string& outputFile) const
                 prevRenderedPixels = renderedPixels;
                 avgTimePixels = elapsedTime / float(renderedPixels);
             }
-            int linesEstimate = m_imageHeight * avgTimeLines - elapsedTime;
-            if (avgTimeLines == 0)
+            uint64_t linesEstimate = m_imageHeight * avgTimeLines - elapsedTime;
+            if (elapsedTime > m_imageHeight * avgTimeLines)
                 linesEstimate = 0;
-            int pixelsEstimate = m_imageWidth * m_imageHeight * avgTimePixels - elapsedTime;
-            if (avgTimePixels == 0)
+            uint64_t pixelsEstimate = m_imageWidth * m_imageHeight * avgTimePixels - elapsedTime;
+            if (elapsedTime > m_imageWidth * m_imageHeight * avgTimePixels)
                 pixelsEstimate = 0;
             std::stringstream ss;
             eraseLines(7, ss);
