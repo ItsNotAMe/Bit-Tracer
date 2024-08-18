@@ -299,15 +299,15 @@ void RayTracer::setPixel(std::vector<uint8_t>& image, int imageWidth, int x, int
     image[3 * (y * imageWidth + x) + 2] = bbyte;
 }
 
-void RayTracer::addToPixel(std::vector<std::atomic<float>>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const
-{
-    float r = pixelColor.x();
-    float g = pixelColor.y();
-    float b = pixelColor.z();
+// void RayTracer::addToPixel(std::vector<float>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const
+// {
+//     float r = pixelColor.x();
+//     float g = pixelColor.y();
+//     float b = pixelColor.z();
 
-    // Write out the pixel color components.
-    // std::scoped_lock<std::mutex> lock(s_imageMutex);
-    imageIntensities[3 * (y * imageWidth + x)].fetch_add(r);
-    imageIntensities[3 * (y * imageWidth + x) + 1] += g;
-    imageIntensities[3 * (y * imageWidth + x) + 2] += b;
-}
+//     // Write out the pixel color components.
+//     std::scoped_lock<std::mutex> lock(s_imageMutex);
+//     imageIntensities[3 * (y * imageWidth + x)] += r;
+//     imageIntensities[3 * (y * imageWidth + x) + 1] += g;
+//     imageIntensities[3 * (y * imageWidth + x) + 2] += b;
+// }
