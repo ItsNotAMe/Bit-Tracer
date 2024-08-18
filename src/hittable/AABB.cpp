@@ -34,7 +34,12 @@ const Interval& AABB::axisInterval(int n) const
     return m_z;
 }
 
-bool AABB::hit(const Ray& r, Interval tRay) const
+float AABB::surfaceArea()
+{
+    return 2 * (m_x.size() * m_y.size() + m_y.size() * m_z.size() + m_z.size() * m_x.size());
+}
+
+bool AABB::hit(const Ray& r, Interval tRange) const
 {
 
     for (int axis = 0; axis < 3; axis++)
@@ -47,16 +52,16 @@ bool AABB::hit(const Ray& r, Interval tRay) const
 
         if (t0 < t1)
         {
-            if (t0 > tRay.min()) tRay.min() = t0;
-            if (t1 < tRay.max()) tRay.max() = t1;
+            if (t0 > tRange.min()) tRange.min() = t0;
+            if (t1 < tRange.max()) tRange.max() = t1;
         }
         else
         {
-            if (t1 > tRay.min()) tRay.min() = t1;
-            if (t0 < tRay.max()) tRay.max() = t0;
+            if (t1 > tRange.min()) tRange.min() = t1;
+            if (t0 < tRange.max()) tRange.max() = t0;
         }
 
-        if (tRay.max() <= tRay.min())
+        if (tRange.max() <= tRange.min())
             return false;
     }
     return true;
@@ -79,4 +84,14 @@ void AABB::padToMinimums()
     if (m_x.size() < delta) m_x = m_x.expand(delta);
     if (m_y.size() < delta) m_y = m_y.expand(delta);
     if (m_z.size() < delta) m_z = m_z.expand(delta);
+}
+
+AABB operator+(const AABB& bbox, const Vec3& offset)
+{
+    return AABB(bbox.x() + offset.x(), bbox.y() + offset.y(), bbox.z() + offset.z());
+}
+
+AABB operator+(const Vec3& offset, const AABB& bbox)
+{
+    return bbox + offset;
 }

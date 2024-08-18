@@ -11,7 +11,7 @@ public:
 
     AABB boundingBox() const override { return m_bbox; }
 
-    bool hit(const Ray& r, HitRecord& rec, Interval tRay) const override;
+    bool hit(const Ray& r, HitRecord& rec, Interval tRange) const override;
 private:
     Point3 m_Q;
     Vec3 m_u, m_v;

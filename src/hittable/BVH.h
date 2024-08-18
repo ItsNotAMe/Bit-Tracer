@@ -51,15 +51,78 @@ public:
             m_left = std::make_shared<BVHNode>(objects, start, mid);
             m_right = std::make_shared<BVHNode>(objects, mid, end);
         }
+
+        // // Build the bounding box of the span of source objects.
+        // m_bbox = AABB::empty;
+        // for (size_t i = start; i < end; i++)
+        //     m_bbox = AABB(m_bbox, objects[i]->boundingBox());
+
+        // size_t objectSpan = end - start;
+
+        // if (objectSpan == 1)
+        // {
+        //     m_left = m_right = objects[start];
+        // }
+        // else if (objectSpan == 2)
+        // {
+        //     m_left = objects[start];
+        //     m_right = objects[start + 1];
+        // }
+        // else
+        // {
+        //     AABB leftBox, rightBox;
+        //     size_t bestAxis = -1;
+        //     size_t bestIndex = start;
+        //     float bestCost = INF;
+
+        //     // Try splitting along each axis
+        //     for (int axis = 0; axis < 3; axis++)
+        //     {
+        //         std::sort(objects.begin() + start, objects.begin() + end,
+        //             [axis](const std::shared_ptr<Hittable>& a, const std::shared_ptr<Hittable>& b) {
+        //                 return boxCompare(a, b, axis);
+        //             });
+
+        //         AABB leftBox = AABB::empty;
+        //         AABB rightBox = AABB::empty;
+
+        //         // Evaluate the SAH cost at each possible split
+        //         for (size_t i = start + 1; i < end; ++i)
+        //         {
+        //             leftBox = AABB(leftBox, objects[i - 1]->boundingBox());
+        //             rightBox = AABB::empty;
+
+        //             for (size_t j = i; j < end; ++j)
+        //                 rightBox = AABB(rightBox, objects[j]->boundingBox());
+
+        //             float cost = 1 + (leftBox.surfaceArea() * (i - start) + rightBox.surfaceArea() * (end - i)) / m_bbox.surfaceArea();
+
+        //             if (cost < bestCost)
+        //             {
+        //                 bestCost = cost;
+        //                 bestAxis = axis;
+        //                 bestIndex = i;
+        //             }
+        //         }
+        //     }
+
+        //     std::sort(objects.begin() + start, objects.begin() + end,
+        //         [bestAxis](const std::shared_ptr<Hittable>& a, const std::shared_ptr<Hittable>& b) {
+        //             return boxCompare(a, b, bestAxis);
+        //         });
+
+        //     m_left = std::make_shared<BVHNode>(objects, start, bestIndex);
+        //     m_right = std::make_shared<BVHNode>(objects, bestIndex, end);
+        // }
     }
 
-    bool hit(const Ray& r, HitRecord& rec, Interval tRay) const override
+    bool hit(const Ray& r, HitRecord& rec, Interval tRange) const override
     {
-        if (!m_bbox.hit(r, tRay))
+        if (!m_bbox.hit(r, tRange))
             return false;
 
-        bool hit_left = m_left->hit(r, rec, tRay);
-        bool hit_right = m_right->hit(r, rec, Interval(tRay.min(), hit_left ? rec.t : tRay.max()));
+        bool hit_left = m_left->hit(r, rec, tRange);
+        bool hit_right = m_right->hit(r, rec, Interval(tRange.min(), hit_left ? rec.t : tRange.max()));
 
         return hit_left || hit_right;
     }
@@ -68,9 +131,7 @@ public:
 private:
     static bool boxCompare(const std::shared_ptr<Hittable> a, const std::shared_ptr<Hittable> b, int axis_index)
     {
-        auto a_axis_interval = a->boundingBox().axisInterval(axis_index);
-        auto b_axis_interval = b->boundingBox().axisInterval(axis_index);
-        return a_axis_interval.min() < b_axis_interval.min();
+        return a->boundingBox().centroid()[axis_index] < b->boundingBox().centroid()[axis_index];
     }
 
     static bool boxCompareX(const std::shared_ptr<Hittable> a, const std::shared_ptr<Hittable> b)

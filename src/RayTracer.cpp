@@ -4,6 +4,7 @@
 #include <vector>
 #include <functional>
 #include <chrono>
+#include <iomanip>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -13,6 +14,37 @@
 #include "hittable/BVH.h"
 
 std::mutex RayTracer::s_imageMutex;
+
+std::string formatDuration(std::chrono::microseconds microseconds)
+{
+    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(microseconds);
+    auto secs = std::chrono::duration_cast<std::chrono::seconds>(ms);
+    ms -= std::chrono::duration_cast<std::chrono::milliseconds>(secs);
+    auto mins = std::chrono::duration_cast<std::chrono::minutes>(secs);
+    secs -= std::chrono::duration_cast<std::chrono::seconds>(mins);
+    auto hour = std::chrono::duration_cast<std::chrono::hours>(mins);
+    mins -= std::chrono::duration_cast<std::chrono::minutes>(hour);
+
+    std::stringstream ss;
+    ss << hour.count() << "h::" << mins.count() << "m::" << secs.count() << "s::" << ms.count() << "ms";
+    return ss.str();
+}
+
+void eraseLines(int count, std::stringstream& ss)
+{
+    if (count > 0)
+    {
+        ss << "\x1b[2K"; // Delete current line
+        // i=1 because we included the first line
+        for (int i = 1; i < count; i++)
+        {
+            ss
+            << "\x1b[1A" // Move cursor up one
+            << "\x1b[2K"; // Delete the entire line
+        }
+        ss << "\r"; // Resume the cursor at beginning of line
+    }
+}
 
 RayTracer::RayTracer(RayTracerSettings settings)
     : m_aspectRatio(settings.AspectRatio), m_imageWidth(settings.Width), m_camera(settings.Camera),
@@ -24,87 +56,124 @@ RayTracer::RayTracer(RayTracerSettings settings)
 
 void RayTracer::render(const std::string& outputFile) const
 {
+    auto begin = std::chrono::steady_clock::now();
+
     HittableList BVHObjects = HittableList(std::make_shared<BVHNode>(m_objects));
 
-    std::vector<float> imageIntensities(m_imageWidth * m_imageHeight * 3);
-    ThreadPool pool(std::thread::hardware_concurrency());
-    for (int sample = 0; sample < m_samplesPerPixel; sample++)
+    // std::vector<std::atomic<float>> imageIntensities(m_imageWidth * m_imageHeight * 3);
+    // ThreadPool pool(std::thread::hardware_concurrency());
+    // for (int sample = 0; sample < m_samplesPerPixel; sample++)
+    // {
+    //     pool.addTask([&]() {
+    //         for (int y = 0; y < m_imageHeight; y++)
+    //         {
+    //             for (int x = 0; x < m_imageWidth; x++)
+    //             {
+    //                 Ray ray = getRay(x, y);
+    //                 Color pixelColor = rayColor(ray, BVHObjects, m_maxDepth);
+    //                 addToPixel(imageIntensities, m_imageWidth, x, y, pixelColor);
+    //             }
+    //         }
+    //         });
+    // }
+
+    // while (1)
+    // {
+
+    //     auto end = std::chrono::steady_clock::now();
+    //     float elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0f;
+    //     int remaining = pool.getQueueSize() + pool.getCountWorking();
+    //     std::clog << "\rSamples remaining: " << remaining << "    Currently working on: " << pool.getCountWorking()
+    //                 << std::fixed << std::setprecision(2) << "    Elapsed time: " << elapsedTime << "s  " << std::flush;
+    //     if (remaining == 0)
+    //         break;
+    //     pool.waitForUpdate();
+    // }
+
+    // std::vector<uint8_t> image(m_imageWidth * m_imageHeight * 3);
+    // for (int y = 0; y < m_imageHeight; y++)
+    // {
+    //     for (int x = 0; x < m_imageWidth; x++)
+    //     {
+    //         setPixel(image, m_imageWidth, x, y,
+    //             Color(imageIntensities[3 * (y * m_imageWidth + x)] / m_samplesPerPixel,
+    //                 imageIntensities[3 * (y * m_imageWidth + x) + 1] / m_samplesPerPixel,
+    //                 imageIntensities[3 * (y * m_imageWidth + x) + 2] / m_samplesPerPixel));
+    //     }
+    // }
+
+    std::atomic<int> renderedLines = 0;
+    std::atomic<int> renderedPixels = 0;
+    std::vector<uint8_t> image(m_imageWidth * m_imageHeight * 3);
     {
-        pool.addTask([&]() {
-            for (int y = 0; y < m_imageHeight; y++)
-            {
+        int nThreads = std::thread::hardware_concurrency();
+        ThreadPool pool(nThreads);
+        for (int y = m_imageHeight - 1; y >= 0; y--)
+        {
+            pool.addTask([&, y]() {
                 for (int x = 0; x < m_imageWidth; x++)
                 {
-                    Ray ray = getRay(x, y);
-                    Color pixelColor = rayColor(ray, BVHObjects, m_maxDepth);
-                    addToPixel(imageIntensities, m_imageWidth, x, y, pixelColor);
+                    Color pixelColor = { 0 };
+                    for (int sample = 0; sample < m_samplesPerPixel; sample++)
+                    {
+                        Ray ray = getRay(x, y);
+
+                        pixelColor += rayColor(ray, BVHObjects, m_maxDepth);
+                    }
+                    pixelColor /= m_samplesPerPixel;
+                    setPixel(image, m_imageWidth, x, y, pixelColor);
+                    renderedPixels++;
                 }
-            }
-            });
-    }
+                renderedLines++;
+                });
+        }
 
-    while (1)
-    {
-        int remaining = pool.getQueueSize() + pool.getCountWorking();
-        std::clog << "\rSamples remaining: " << remaining << " Currently working on: " << pool.getCountWorking() << "  " << std::flush;
-        if (remaining == 0)
-            break;
-        pool.waitForUpdate();
-    }
-
-    std::vector<uint8_t> image(m_imageWidth * m_imageHeight * 3);
-    for (int y = 0; y < m_imageHeight; y++)
-    {
-        for (int x = 0; x < m_imageWidth; x++)
+        int prevRenderedLines = 0;
+        int prevRenderedPixels = 0;
+        int avgTimeLines = 0;
+        int avgTimePixels = 0;
+        std::clog << "\n\n\n\n\n\n";
+        while (1)
         {
-            setPixel(image, m_imageWidth, x, y,
-                Color(imageIntensities[3 * (y * m_imageWidth + x)] / m_samplesPerPixel,
-                    imageIntensities[3 * (y * m_imageWidth + x) + 1] / m_samplesPerPixel,
-                    imageIntensities[3 * (y * m_imageWidth + x) + 2] / m_samplesPerPixel));
+            auto end = std::chrono::steady_clock::now();
+            auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
+            if (prevRenderedLines != renderedLines)
+            {
+                prevRenderedLines = renderedLines;
+                avgTimeLines = elapsedTime / float(renderedLines);
+            }
+            if (prevRenderedPixels != renderedPixels)
+            {
+                prevRenderedPixels = renderedPixels;
+                avgTimePixels = elapsedTime / float(renderedPixels);
+            }
+            int linesEstimate = m_imageHeight * avgTimeLines - elapsedTime;
+            if (avgTimeLines == 0)
+                linesEstimate = 0;
+            int pixelsEstimate = m_imageWidth * m_imageHeight * avgTimePixels - elapsedTime;
+            if (avgTimePixels == 0)
+                pixelsEstimate = 0;
+            std::stringstream ss;
+            eraseLines(7, ss);
+            ss << "Lines rendered: " << renderedLines << "/" << m_imageHeight << "\n"
+                << "Pixels rendered: " << renderedPixels << "/" << m_imageWidth * m_imageHeight << "\n"
+                << "Elapsed time: " << formatDuration(std::chrono::microseconds(elapsedTime)) << "\n"
+                << "Average time per line: " << formatDuration(std::chrono::microseconds(avgTimeLines)) << "\n"
+                << "Average time per pixel: " << formatDuration(std::chrono::microseconds(avgTimePixels)) << "\n"
+                << "Estimate time left by lines: " << formatDuration(std::chrono::microseconds(linesEstimate)) << "\n"
+                << "Estimate time left by pixels: " << formatDuration(std::chrono::microseconds(pixelsEstimate));
+            std::clog << ss.str() << std::flush;
+            if (renderedLines == m_imageHeight)
+                break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         }
     }
 
-    // TODO: split work better between threads in case on part of the image takes longer to render
-    // std::atomic<int> renderedLines = 0;
-    // std::vector<uint8_t> image(m_imageWidth * m_imageHeight * 3);
-    // {
-    //     int nThreads = std::thread::hardware_concurrency();
-    //     ThreadPool pool(nThreads);
-    //     for (int i = 0; i < nThreads; i++)
-    //     {
-    //         pool.addTask([&](int yStart, int yEnd) {
-    //             for (int y = yStart; y < yEnd; y++)
-    //             {
-    //                 for (int x = 0; x < m_imageWidth; x++)
-    //                 {
-    //                     Color pixelColor = { 0 };
-    //                     for (int sample = 0; sample < m_samplesPerPixel; sample++)
-    //                     {
-    //                         Ray ray = getRay(x, y);
-
-    //                         pixelColor += rayColor(ray, BVHObjects, m_maxDepth);
-    //                     }
-    //                     pixelColor /= m_samplesPerPixel;
-    //                     setPixel(image, m_imageWidth, x, y, pixelColor);
-    //                 }
-    //                 renderedLines++;
-    //             }
-    //             }, i * m_imageHeight / nThreads, (i + 1) == nThreads ? m_imageHeight : (i + 1) * m_imageHeight / nThreads);
-    //     }
-
-    //     while (1)
-    //     {
-    //         std::clog << "\rLines rendered: " << renderedLines << "/" << m_imageHeight << std::flush;
-    //         if (renderedLines == m_imageHeight)
-    //             break;
-    //         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    //     }
-    // }
 
     _mkdir("output");
     stbi_write_png(outputFile.c_str(), m_imageWidth, m_imageHeight, 3, image.data(), m_imageWidth * 3);
 
-    std::clog << "\rDone.                                        \n";
+    std::clog << "\nDone.\n";
 }
 
 void RayTracer::setSettings(RayTracerSettings settings)
@@ -230,15 +299,15 @@ void RayTracer::setPixel(std::vector<uint8_t>& image, int imageWidth, int x, int
     image[3 * (y * imageWidth + x) + 2] = bbyte;
 }
 
-void RayTracer::addToPixel(std::vector<float>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const
+void RayTracer::addToPixel(std::vector<std::atomic<float>>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const
 {
     float r = pixelColor.x();
     float g = pixelColor.y();
     float b = pixelColor.z();
 
     // Write out the pixel color components.
-    std::scoped_lock<std::mutex> lock(s_imageMutex);
-    imageIntensities[3 * (y * imageWidth + x)] += r;
+    // std::scoped_lock<std::mutex> lock(s_imageMutex);
+    imageIntensities[3 * (y * imageWidth + x)].fetch_add(r);
     imageIntensities[3 * (y * imageWidth + x) + 1] += g;
     imageIntensities[3 * (y * imageWidth + x) + 2] += b;
 }

@@ -30,3 +30,6 @@ public:
 private:
     float m_min, m_max;
 };
+
+Interval operator+(const Interval& interval, float displacement);
+Interval operator+(float displacement, const Interval& interval);

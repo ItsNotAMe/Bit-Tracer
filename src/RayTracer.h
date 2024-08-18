@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <string>
+#include <atomic>
 
 #include "Camera.h"
 #include "hittable/Hittable.h"
@@ -36,7 +37,7 @@ private:
     Vec3 defocusDistSample() const;
     Color rayColor(const Ray& r, Hittable& objects, int depth) const;
     void setPixel(std::vector<uint8_t>& image, int imageWidth, int x, int y, const Color& pixelColor) const;
-    void addToPixel(std::vector<float>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const;
+    void addToPixel(std::vector<std::atomic<float>>& imageIntensities, int imageWidth, int x, int y, const Color& pixelColor) const;
 private:
     float m_aspectRatio;
     int m_imageWidth;

@@ -9,7 +9,7 @@ int main()
 {
     auto begin = std::chrono::steady_clock::now();
 
-    switch (11)
+    switch (14)
     {
         case 1: example1();  break;
         case 2: example2(); break;
@@ -22,6 +22,9 @@ int main()
         case 9: quads(); break;
         case 10: simpleLight(); break;
         case 11: cornellBox(); break;
+        case 12: cornellSmoke(); break;
+        case 13: finalScene2(800, 10000, 40); break;
+        default: finalScene2(400, 250, 4); break;
     }
 
     auto end = std::chrono::steady_clock::now();

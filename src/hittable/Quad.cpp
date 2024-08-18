@@ -14,7 +14,7 @@ Quad::Quad(const Point3& Q, const Vec3& u, const Vec3& v, std::shared_ptr<Materi
     m_bbox = AABB(bboxDiagonal1, bboxDiagonal2);
 }
 
-bool Quad::hit(const Ray& r, HitRecord& rec, Interval tRay) const
+bool Quad::hit(const Ray& r, HitRecord& rec, Interval tRange) const
 {
     float denom = dot(m_normal, r.direction());
 
@@ -23,7 +23,7 @@ bool Quad::hit(const Ray& r, HitRecord& rec, Interval tRay) const
         return false;
 
     float t = (m_D - dot(m_normal, r.origin())) / denom;
-    if (!tRay.contains(t))
+    if (!tRange.contains(t))
         return false;
 
     // Determine if the hit point lies within the planar shape using its plane coordinates.
