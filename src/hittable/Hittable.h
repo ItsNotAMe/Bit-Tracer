@@ -32,6 +32,16 @@ public:
     virtual bool hit(const Ray& r, HitRecord& rec, Interval tRange) const = 0;
 
     virtual AABB boundingBox() const = 0;
+
+    virtual float pdfValue(const Point3& origin, const Vec3& direction) const
+    {
+        return 0.0f;
+    }
+
+    virtual Vec3 random(const Point3& origin) const
+    {
+        return Vec3(1, 0, 0);
+    }
 };
 
 class Translate : public Hittable

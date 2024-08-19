@@ -483,3 +483,130 @@ void finalScene2(int imageWidth, int samplesPerPixel, int maxDepth)
 
     tracer.render("output/final_scene2_" + std::to_string(imageWidth) + "_" + std::to_string(samplesPerPixel) + "_" + std::to_string(maxDepth) + ".png");
 }
+
+void cornellBoxBook3()
+{
+    RayTracerSettings settings;
+    settings.AspectRatio = 1.0f;
+    settings.Width = 600;
+    settings.SamplesPerPixel = 1000;
+    settings.MaxDepth = 50;
+    settings.Camera.VFOV = 40;
+    settings.Camera.LookFrom = Point3(278, 278, -800);
+    settings.Camera.LookAt = Point3(278, 278, 0);
+    settings.Camera.UpVec = Vec3(0, 1, 0);
+    RayTracer tracer(settings);
+
+    auto red = std::make_shared<Lambertian>(Color(.65, .05, .05));
+    auto white = std::make_shared<Lambertian>(Color(.73, .73, .73));
+    auto green = std::make_shared<Lambertian>(Color(.12, .45, .15));
+    auto light = std::make_shared<DiffuseLight>(Color(15, 15, 15));
+
+    tracer.addObject(std::make_shared<Quad>(Point3(555, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), green));
+    tracer.addObject(std::make_shared<Quad>(Point3(0, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), red));
+    tracer.addObject(std::make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), light));
+    tracer.addObject(std::make_shared<Quad>(Point3(0, 0, 0), Vec3(555, 0, 0), Vec3(0, 0, 555), white));
+    tracer.addObject(std::make_shared<Quad>(Point3(555, 555, 555), Vec3(-555, 0, 0), Vec3(0, 0, -555), white));
+    tracer.addObject(std::make_shared<Quad>(Point3(0, 0, 555), Vec3(555, 0, 0), Vec3(0, 555, 0), white));
+
+    std::shared_ptr<Hittable> box1 = box(Point3(0, 0, 0), Point3(165, 330, 165), white);
+    box1 = std::make_shared<RotateY>(box1, 15);
+    box1 = std::make_shared<Translate>(box1, Vec3(265, 0, 295));
+    tracer.addObject(box1);
+
+    std::shared_ptr<Hittable> box2 = box(Point3(0, 0, 0), Point3(165, 165, 165), white);
+    box2 = std::make_shared<RotateY>(box2, -18);
+    box2 = std::make_shared<Translate>(box2, Vec3(130, 0, 65));
+    tracer.addObject(box2);
+
+    tracer.addLight(std::make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), std::shared_ptr<Material>()));
+
+    tracer.render("output/cornell_box_book_3.png");
+}
+
+void cornellBoxAlluminium()
+{
+    RayTracerSettings settings;
+    settings.AspectRatio = 1.0f;
+    settings.Width = 600;
+    settings.SamplesPerPixel = 1000;
+    settings.MaxDepth = 50;
+    settings.Camera.VFOV = 40;
+    settings.Camera.LookFrom = Point3(278, 278, -800);
+    settings.Camera.LookAt = Point3(278, 278, 0);
+    settings.Camera.UpVec = Vec3(0, 1, 0);
+    RayTracer tracer(settings);
+
+    auto red = std::make_shared<Lambertian>(Color(.65, .05, .05));
+    auto white = std::make_shared<Lambertian>(Color(.73, .73, .73));
+    auto green = std::make_shared<Lambertian>(Color(.12, .45, .15));
+    auto light = std::make_shared<DiffuseLight>(Color(15, 15, 15));
+
+    tracer.addObject(std::make_shared<Quad>(Point3(555, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), green));
+    tracer.addObject(std::make_shared<Quad>(Point3(0, 0, 0), Vec3(0, 555, 0), Vec3(0, 0, 555), red));
+    tracer.addObject(std::make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), light));
+    tracer.addObject(std::make_shared<Quad>(Point3(0, 0, 0), Vec3(555, 0, 0), Vec3(0, 0, 555), white));
+    tracer.addObject(std::make_shared<Quad>(Point3(555, 555, 555), Vec3(-555, 0, 0), Vec3(0, 0, -555), white));
+    tracer.addObject(std::make_shared<Quad>(Point3(0, 0, 555), Vec3(555, 0, 0), Vec3(0, 555, 0), white));
+
+    std::shared_ptr<Material> aluminum = std::make_shared<Metal>(Color(0.8, 0.85, 0.88), 0.0);
+    std::shared_ptr<Hittable> box1 = box(Point3(0, 0, 0), Point3(165, 330, 165), aluminum);
+    box1 = std::make_shared<RotateY>(box1, 15);
+    box1 = std::make_shared<Translate>(box1, Vec3(265, 0, 295));
+    tracer.addObject(box1);
+
+    std::shared_ptr<Hittable> box2 = box(Point3(0, 0, 0), Point3(165, 165, 165), white);
+    box2 = std::make_shared<RotateY>(box2, -18);
+    box2 = std::make_shared<Translate>(box2, Vec3(130, 0, 65));
+    tracer.addObject(box2);
+
+    tracer.addLight(std::make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), std::shared_ptr<Material>()));
+
+    tracer.render("output/cornell_box_alluminium.png");
+}
+
+void cornellBoxGlassSphere()
+{
+    RayTracerSettings settings;
+    settings.AspectRatio = 1.0f;
+    settings.Width = 600;
+    settings.SamplesPerPixel = 1000;
+    settings.MaxDepth = 50;
+    settings.Camera.VFOV = 40;
+    settings.Camera.LookFrom = Point3(278, 278, -800);
+    settings.Camera.LookAt = Point3(278, 278, 0);
+    settings.Camera.UpVec = Vec3(0, 1, 0);
+    RayTracer tracer(settings);
+
+    auto red = std::make_shared<Lambertian>(Color(.65, .05, .05));
+    auto white = std::make_shared<Lambertian>(Color(.73, .73, .73));
+    auto green = std::make_shared<Lambertian>(Color(.12, .45, .15));
+    auto light = std::make_shared<DiffuseLight>(Color(15, 15, 15));
+
+    // Cornell box sides
+    tracer.addObject(std::make_shared<Quad>(Point3(555, 0, 0), Vec3(0, 0, 555), Vec3(0, 555, 0), green));
+    tracer.addObject(std::make_shared<Quad>(Point3(0, 0, 555), Vec3(0, 0, -555), Vec3(0, 555, 0), red));
+    tracer.addObject(std::make_shared<Quad>(Point3(0, 555, 0), Vec3(555, 0, 0), Vec3(0, 0, 555), white));
+    tracer.addObject(std::make_shared<Quad>(Point3(0, 0, 555), Vec3(555, 0, 0), Vec3(0, 0, -555), white));
+    tracer.addObject(std::make_shared<Quad>(Point3(555, 0, 555), Vec3(-555, 0, 0), Vec3(0, 555, 0), white));
+
+    // Light
+    tracer.addObject(std::make_shared<Quad>(Point3(213, 554, 227), Vec3(130, 0, 0), Vec3(0, 0, 105), light));
+
+    // Box
+    std::shared_ptr<Hittable> box1 = box(Point3(0, 0, 0), Point3(165, 330, 165), white);
+    box1 = std::make_shared<RotateY>(box1, 15);
+    box1 = std::make_shared<Translate>(box1, Vec3(265, 0, 295));
+    tracer.addObject(box1);
+
+    // Glass Sphere
+    auto glass = std::make_shared<Dielectric>(1.5);
+    tracer.addObject(std::make_shared<Sphere>(Point3(190, 90, 190), 90, glass));
+
+    // Light Sources
+    auto emptyMaterial = std::shared_ptr<Material>();
+    tracer.addLight(std::make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), emptyMaterial));
+    tracer.addLight(std::make_shared<Sphere>(Point3(190, 90, 190), 90, emptyMaterial));
+
+    tracer.render("output/cornell_box_glass_sphere.png");
+}

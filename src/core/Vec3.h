@@ -166,6 +166,19 @@ inline Vec3 randomOnHemisphere(const Vec3& normal)
         return -onUnitSphere;
 }
 
+inline Vec3 randomCosineDirection()
+{
+    float r1 = randomFloat();
+    float r2 = randomFloat();
+
+    float phi = 2 * PI * r1;
+    float x = std::cos(phi) * std::sqrt(r2);
+    float y = std::sin(phi) * std::sqrt(r2);
+    float z = std::sqrt(1 - r2);
+
+    return Vec3(x, y, z);
+}
+
 inline Vec3 reflect(const Vec3& v, const Vec3& n)
 {
     return v - 2 * dot(v, n) * n;

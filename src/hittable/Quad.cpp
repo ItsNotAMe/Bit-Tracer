@@ -12,6 +12,8 @@ Quad::Quad(const Point3& Q, const Vec3& u, const Vec3& v, std::shared_ptr<Materi
     auto bboxDiagonal1 = AABB(Q, Q + u + v);
     auto bboxDiagonal2 = AABB(Q + u, Q + v);
     m_bbox = AABB(bboxDiagonal1, bboxDiagonal2);
+
+    m_area = n.length();
 }
 
 bool Quad::hit(const Ray& r, HitRecord& rec, Interval tRange) const
@@ -46,4 +48,22 @@ bool Quad::hit(const Ray& r, HitRecord& rec, Interval tRange) const
     rec.setFaceNormal(r, m_normal);
 
     return true;
+}
+
+float Quad::pdfValue(const Point3& origin, const Vec3& direction) const
+{
+    HitRecord rec;
+    if (!this->hit(Ray(origin, direction), rec, Interval(0.001, INF)))
+        return 0;
+
+    float distanceSquared = rec.t * rec.t * direction.lengthSquared();
+    float cosine = std::fabs(dot(direction, rec.Normal) / direction.length());
+
+    return distanceSquared / (cosine * m_area);
+}
+
+Vec3 Quad::random(const Point3& origin) const
+{
+    Point3 p = m_Q + (randomFloat() * m_u) + (randomFloat() * m_v);
+    return p - origin;
 }

@@ -12,7 +12,9 @@ public:
     Lambertian(const Color& albedo) : m_tex(std::make_shared<SolidColor>(albedo)) {}
     Lambertian(std::shared_ptr<Texture> texture) : m_tex(texture) {}
 
-    bool scatter(const Ray& rayIn, const HitRecord& rec, Color& attenuation, Ray& scattered) const override;
+    bool scatter(const Ray& rayIn, const HitRecord& rec, ScatterRecord& srec) const override;
+
+    float scatteringPDF(const Ray& rayIn, const HitRecord& rec, const Ray& scattered) const override;
 private:
     std::shared_ptr<Texture> m_tex;
 };

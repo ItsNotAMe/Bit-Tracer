@@ -1,5 +1,7 @@
 #include "Sphere.h"
 
+#include "core/ONB.h"
+
 Sphere::Sphere(const Point3& center, float radius, std::shared_ptr<Material> mat)
     : m_center(center), m_radius(std::fmax(0, radius)), m_mat(mat), m_isMoving(false)
 {
@@ -50,10 +52,45 @@ bool Sphere::hit(const Ray& r, HitRecord& rec, Interval tRange) const
     return true;
 }
 
+float Sphere::pdfValue(const Point3& origin, const Vec3& direction) const
+{
+    // This method only works for stationary spheres.
+
+    HitRecord rec;
+    if (!this->hit(Ray(origin, direction), rec, Interval(0.001, INF)))
+        return 0;
+
+    auto cosThetaMax = std::sqrt(1 - m_radius * m_radius / (m_center - origin).lengthSquared());
+    auto solidAngle = 2 * PI * (1 - cosThetaMax);
+
+    return  1 / solidAngle;
+}
+
+Vec3 Sphere::random(const Point3& origin) const
+{
+    Vec3 direction = m_center - origin;
+    auto distanceSquared = direction.lengthSquared();
+    ONB uvw(direction);
+    return uvw.transform(randomToSphere(m_radius, distanceSquared));
+}
+
 void Sphere::getSphereUV(const Point3& p, float& u, float& v)
 {
     float phi = std::atan2(-p.z(), p.x()) + PI;
     float theta = std::acos(-p.y());
     u = phi / (2 * PI);
     v = theta / PI;
+}
+
+Vec3 Sphere::randomToSphere(float radius, float distanceSquared)
+{
+    float r1 = randomFloat();
+    float r2 = randomFloat();
+    float z = 1 + r2 * (std::sqrt(1 - radius * radius / distanceSquared) - 1);
+
+    float phi = 2 * PI * r1;
+    float x = std::cos(phi) * std::sqrt(1 - z * z);
+    float y = std::sin(phi) * std::sqrt(1 - z * z);
+
+    return Vec3(x, y, z);
 }

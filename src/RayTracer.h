@@ -29,9 +29,11 @@ public:
 
     void setSettings(RayTracerSettings settings);
     void addObject(std::shared_ptr<Hittable> obj) { m_objects.add(obj); }
+    void addLight(std::shared_ptr<Hittable> light) { m_lights.add(light); }
 private:
     void initialize();
-    Ray getRay(int x, int y) const;
+    Ray getRay(int x, int y, int sx, int sy) const;
+    Vec3 sampleSquareStratified(int sx, int sy) const;
     Vec3 sampleSquare() const;
     Vec3 defocusDistSample() const;
     Color rayColor(const Ray& r, Hittable& objects, int depth) const;
@@ -47,6 +49,10 @@ private:
     int m_samplesPerPixel;
     int m_maxDepth;
 
+    float m_pixelSamplesScale;
+    int m_sqrtSPP;
+    float m_recipSqrtSPP;
+
     Color m_background;
 
     Point3 m_pixel00Loc; // Location of pixel 0, 0
@@ -60,6 +66,7 @@ private:
     Vec3 m_defocusDiskV; // Defocus disk vertical radius
 
     HittableList m_objects;
+    HittableList m_lights; // TODO: do multiple light sources
 
     static std::mutex s_imageMutex;
 };

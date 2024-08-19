@@ -5,12 +5,15 @@
 
 #include "Scenes.h"
 
-int main()
+int main(int argc, char** argv)
 {
     auto begin = std::chrono::steady_clock::now();
 
-    // TODO: add command line argument
-    switch (14)
+    int scene = 17;
+    if (argc == 2)
+        scene = std::stoi(argv[1]);
+    
+    switch (scene)
     {
         case 1: example1();  break;
         case 2: example2(); break;
@@ -24,12 +27,15 @@ int main()
         case 10: simpleLight(); break;
         case 11: cornellBox(); break;
         case 12: cornellSmoke(); break;
-        case 13: finalScene2(800, 10000, 40); break;
-        default: finalScene2(400, 250, 4); break;
+        case 13: finalScene2(800, 1500, 40); break;
+        case 14: finalScene2(400, 250, 4); break;
+        case 15: cornellBoxBook3(); break;
+        case 16: cornellBoxAlluminium(); break;
+        case 17: cornellBoxGlassSphere(); break;
     }
 
     auto end = std::chrono::steady_clock::now();
-    std::cout << std::fixed << std::setprecision(2) << "Time to render: " << std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count() / 1000000.0f << "s" << std::endl;
+    std::cout << "Time to render: " << formatDuration(std::chrono::duration_cast<std::chrono::microseconds>(end - begin)) << "s" << std::endl;
 
     return 0;
 }

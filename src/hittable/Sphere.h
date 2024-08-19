@@ -13,8 +13,12 @@ public:
     bool hit(const Ray& r, HitRecord& rec, Interval tRange) const override;
 
     AABB boundingBox() const override { return m_bbox; }
+
+    float pdfValue(const Point3& origin, const Vec3& direction) const override;
+    Vec3 random(const Point3& origin) const override;
 private:
     static void getSphereUV(const Point3& p, float& u, float& v);
+    static Vec3 randomToSphere(float radius, float distanceSquared);
 private:
     Point3 m_center;
     float m_radius;

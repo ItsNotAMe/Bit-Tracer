@@ -3,8 +3,6 @@
 #include <direct.h>
 #include <vector>
 #include <functional>
-#include <chrono>
-#include <iomanip>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -12,39 +10,11 @@
 #include "core/ThreadPool.h"
 #include "materials/Material.h"
 #include "hittable/BVH.h"
+#include "pdf/HittablePDF.h"
+#include "pdf/CosinePDF.h"
+#include "pdf/MixturePDF.h"
 
 std::mutex RayTracer::s_imageMutex;
-
-std::string formatDuration(std::chrono::microseconds microseconds)
-{
-    auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(microseconds);
-    auto secs = std::chrono::duration_cast<std::chrono::seconds>(ms);
-    ms -= std::chrono::duration_cast<std::chrono::milliseconds>(secs);
-    auto mins = std::chrono::duration_cast<std::chrono::minutes>(secs);
-    secs -= std::chrono::duration_cast<std::chrono::seconds>(mins);
-    auto hour = std::chrono::duration_cast<std::chrono::hours>(mins);
-    mins -= std::chrono::duration_cast<std::chrono::minutes>(hour);
-
-    std::stringstream ss;
-    ss << hour.count() << "h::" << mins.count() << "m::" << secs.count() << "s::" << ms.count() << "ms";
-    return ss.str();
-}
-
-void eraseLines(int count, std::stringstream& ss)
-{
-    if (count > 0)
-    {
-        ss << "\x1b[2K"; // Delete current line
-        // i=1 because we included the first line
-        for (int i = 1; i < count; i++)
-        {
-            ss
-            << "\x1b[1A" // Move cursor up one
-            << "\x1b[2K"; // Delete the entire line
-        }
-        ss << "\r"; // Resume the cursor at beginning of line
-    }
-}
 
 RayTracer::RayTracer(RayTracerSettings settings)
     : m_aspectRatio(settings.AspectRatio), m_imageWidth(settings.Width), m_camera(settings.Camera),
@@ -108,20 +78,34 @@ void RayTracer::render(const std::string& outputFile) const
     {
         int nThreads = std::thread::hardware_concurrency();
         ThreadPool pool(nThreads);
-        for (int y = m_imageHeight - 1; y >= 0; y--)
+
+        int perm[m_imageHeight];
+        for (int i = 0; i < m_imageHeight; i++)
+            perm[i] = i;
+
+        for (int i = m_imageHeight - 1; i > 0; i--)
+        {
+            int target = randomInt(0, i);
+            int tmp = perm[i];
+            perm[i] = perm[target];
+            perm[target] = tmp;
+        }
+
+        for (int y : perm)
         {
             pool.addTask([&, y]() {
                 for (int x = 0; x < m_imageWidth; x++)
                 {
                     Color pixelColor = { 0 };
-                    for (int sample = 0; sample < m_samplesPerPixel; sample++)
+                    for (int sy = 0; sy < m_sqrtSPP; sy++)
                     {
-                        Ray ray = getRay(x, y);
-
-                        pixelColor += rayColor(ray, BVHObjects, m_maxDepth);
+                        for (int sx = 0; sx < m_sqrtSPP; sx++)
+                        {
+                            Ray ray = getRay(x, y, sx, sy);
+                            pixelColor += rayColor(ray, BVHObjects, m_maxDepth);
+                        }
                     }
-                    pixelColor /= m_samplesPerPixel;
-                    setPixel(image, m_imageWidth, x, y, pixelColor);
+                    setPixel(image, m_imageWidth, x, y, m_pixelSamplesScale * pixelColor);
                     renderedPixels++;
                 }
                 renderedLines++;
@@ -220,14 +204,18 @@ void RayTracer::initialize()
     float defocusRadius = m_focusDistance * std::tan(degreesToRadians(m_defocusAngle / 2));
     m_defocusDiskU = m_u * defocusRadius;
     m_defocusDiskV = m_v * defocusRadius;
+
+    m_sqrtSPP = int(std::sqrt(m_samplesPerPixel));
+    m_pixelSamplesScale = 1.0 / (m_sqrtSPP * m_sqrtSPP);
+    m_recipSqrtSPP = 1.0 / m_sqrtSPP;
 }
 
-Ray RayTracer::getRay(int x, int y) const
+Ray RayTracer::getRay(int x, int y, int sx, int sy) const
 {
     // Construct a camera ray originating from the defocus disk and directed at a randomly
-    // sampled point around the pixel location x, y.
+    // sampled point around the pixel location x, y for stratified sample square sx, sy.
 
-    Vec3 offset = sampleSquare();
+    Vec3 offset = sampleSquareStratified(sx, sy);
     Point3 pixelSample = m_pixel00Loc
         + ((x + offset.x()) * m_pixelDeltaU)
         + ((y + offset.y()) * m_pixelDeltaV);
@@ -237,6 +225,17 @@ Ray RayTracer::getRay(int x, int y) const
     float rayTime = randomFloat();
 
     return Ray(rayOrigin, rayDirection, rayTime);
+}
+
+Vec3 RayTracer::sampleSquareStratified(int sx, int sy) const
+{
+    // Returns the vector to a random point in the square sub-pixel specified by grid
+    // indices s_i and s_j, for an idealized unit square pixel [-.5,-.5] to [+.5,+.5].
+
+    float px = ((sx + randomFloat()) * m_recipSqrtSPP) - 0.5;
+    float py = ((sy + randomFloat()) * m_recipSqrtSPP) - 0.5;
+
+    return Vec3(px, py, 0);
 }
 
 Vec3 RayTracer::sampleSquare() const
@@ -263,14 +262,28 @@ Color RayTracer::rayColor(const Ray& r, Hittable& objects, int depth) const
     if (!objects.hit(r, rec, Interval(0.001, INF)))
         return m_background;
 
-    Ray scattered;
-    Color attenuation;
-    Color emissionColor = rec.Mat->emitted(rec.u, rec.v, rec.Point);
+    ScatterRecord srec;
+    Color emissionColor = rec.Mat->emitted(r, rec, rec.u, rec.v, rec.Point);
 
-    if (!rec.Mat->scatter(r, rec, attenuation, scattered))
+    if (!rec.Mat->scatter(r, rec, srec))
         return emissionColor;
 
-    Color scatterColor = attenuation * rayColor(scattered, objects, depth - 1);
+    if (srec.SkipPDF)
+        return srec.Attenuation * rayColor(srec.SkipPDFRay, objects, depth - 1);
+
+    std::shared_ptr<PDF> p = srec.PDF;
+    if (m_lights.size() > 0)
+    {
+        auto pLight = std::make_shared<HittablePDF>(m_lights, rec.Point);
+        p = std::make_shared<MixturePDF>(pLight, srec.PDF);
+    }
+
+    Ray scattered = Ray(rec.Point, p->generate(), r.time());
+    float pdfValue = p->value(scattered.direction());
+
+    float scatteringPDF = rec.Mat->scatteringPDF(r, rec, scattered);
+
+    Color scatterColor = (srec.Attenuation * scatteringPDF * rayColor(scattered, objects, depth-1)) / pdfValue;
 
     return emissionColor + scatterColor;
 }
@@ -280,6 +293,11 @@ void RayTracer::setPixel(std::vector<uint8_t>& image, int imageWidth, int x, int
     float r = pixelColor.x();
     float g = pixelColor.y();
     float b = pixelColor.z();
+
+    // Replace NaN components with zero.
+    if (r != r) r = 0.0;
+    if (g != g) g = 0.0;
+    if (b != b) b = 0.0;
 
     // Apply a linear to gamma transform for gamma 2
     r = linearToGamma(r);

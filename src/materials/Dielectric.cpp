@@ -1,23 +1,25 @@
 #include "Dielectric.h"
 
-bool Dielectric::scatter(const Ray& rayIn, const HitRecord& rec, Color& attenuation, Ray& scattered) const
+bool Dielectric::scatter(const Ray& rayIn, const HitRecord& rec, ScatterRecord& srec) const
 {
-    float ri = rec.FrontFace ? 1.0f / m_refractionIndex : m_refractionIndex;
+    srec.Attenuation = Color(1.0, 1.0, 1.0);
+    srec.PDF = nullptr;
+    srec.SkipPDF = true;
+    double ri = rec.FrontFace ? (1.0 / m_refractionIndex) : m_refractionIndex;
 
-    Vec3 unitRayin = unitVector(rayIn.direction());
-    float cosTheta = std::fmin(dot(-unitRayin, rec.Normal), 1.0);
-    float sinTheta = std::sqrt(1.0 - cosTheta * cosTheta);
+    Vec3 unitDirection = unitVector(rayIn.direction());
+    double cosTheta = std::fmin(dot(-unitDirection, rec.Normal), 1.0);
+    double sinTheta = std::sqrt(1.0 - cosTheta * cosTheta);
 
     bool cannotRefract = ri * sinTheta > 1.0;
     Vec3 direction;
 
     if (cannotRefract || reflectance(cosTheta, ri) > randomFloat())
-        direction = reflect(unitRayin, rec.Normal);
+        direction = reflect(unitDirection, rec.Normal);
     else
-        direction = refract(unitRayin, rec.Normal, ri);
+        direction = refract(unitDirection, rec.Normal, ri);
 
-    attenuation = Color(1);
-    scattered = Ray(rec.Point, direction, rayIn.time());
+    srec.SkipPDFRay = Ray(rec.Point, direction, rayIn.time());
     return true;
 }
 

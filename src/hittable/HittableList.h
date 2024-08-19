@@ -21,6 +21,8 @@ public:
 
     std::vector<std::shared_ptr<Hittable>>& objects() { return m_objects; }
 
+    size_t size() const { return m_objects.size(); }
+
     bool hit(const Ray& r, HitRecord& rec, Interval tRange) const override
     {
         HitRecord tempRec;
@@ -41,6 +43,23 @@ public:
     }
 
     AABB boundingBox() const override { return m_bbox; }
+
+    float pdfValue(const Point3& origin, const Vec3& direction) const override
+    {
+        float weight = 1.0f / m_objects.size();
+        float sum = 0.0f;
+
+        for (const auto& object : m_objects)
+            sum += weight * object->pdfValue(origin, direction);
+
+        return sum;
+    }
+
+    Vec3 random(const Point3& origin) const override
+    {
+        int intSize = int(m_objects.size());
+        return m_objects[randomInt(0, intSize - 1)]->random(origin);
+    }
 private:
     std::vector<std::shared_ptr<Hittable>> m_objects;
     AABB m_bbox;
