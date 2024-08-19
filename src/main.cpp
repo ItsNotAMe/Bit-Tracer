@@ -32,6 +32,8 @@ int main(int argc, char** argv)
         case 15: cornellBoxBook3(); break;
         case 16: cornellBoxAlluminium(); break;
         case 17: cornellBoxGlassSphere(); break;
+        case 18: finalScene2WithImportance(800, 1500, 40); break;
+        case 19: finalScene2WithImportance(400, 250, 4); break;
     }
 
     auto end = std::chrono::steady_clock::now();
