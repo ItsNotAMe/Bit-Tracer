@@ -37,7 +37,7 @@ int main(int argc, char** argv)
     }
 
     auto end = std::chrono::steady_clock::now();
-    std::cout << "Time to render: " << formatDuration(std::chrono::duration_cast<std::chrono::microseconds>(end - begin)) << "s" << std::endl;
+    std::cout << "Time to render: " << formatDuration(std::chrono::duration_cast<std::chrono::microseconds>(end - begin)) << std::endl;
 
     return 0;
 }
