@@ -7,6 +7,7 @@
 #include "Camera.h"
 #include "hittable/Hittable.h"
 #include "hittable/HittableList.h"
+#include "materials/Material.h"
 
 struct RayTracerSettings
 {
@@ -30,6 +31,7 @@ public:
     void setSettings(RayTracerSettings settings);
     void addObject(std::shared_ptr<Hittable> obj) { m_objects.add(obj); }
     void addLight(std::shared_ptr<Hittable> light) { m_lights.add(light); }
+    void loadModel(const std::string& filePath, const std::shared_ptr<Material> material, const Point3& position, float scale);
 private:
     void initialize();
     Ray getRay(int x, int y, int sx, int sy) const;

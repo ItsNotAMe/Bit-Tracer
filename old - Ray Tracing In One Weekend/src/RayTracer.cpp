@@ -3,6 +3,7 @@
 #include <direct.h>
 #include <vector>
 #include <functional>
+#include <fstream>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
@@ -13,6 +14,7 @@
 #include "pdf/HittablePDF.h"
 #include "pdf/CosinePDF.h"
 #include "pdf/MixturePDF.h"
+#include "hittable/Triangle.h"
 
 std::mutex RayTracer::s_imageMutex;
 
@@ -78,8 +80,7 @@ void RayTracer::render(const std::string& outputFile) const
     {
         int nThreads = std::thread::hardware_concurrency();
         ThreadPool pool(nThreads);
-
-        int perm[m_imageHeight];
+        std::vector<int> perm(m_imageHeight);
         for (int i = 0; i < m_imageHeight; i++)
             perm[i] = i;
 
@@ -329,3 +330,46 @@ void RayTracer::setPixel(std::vector<uint8_t>& image, int imageWidth, int x, int
 //     imageIntensities[3 * (y * imageWidth + x) + 1] += g;
 //     imageIntensities[3 * (y * imageWidth + x) + 2] += b;
 // }
+void RayTracer::loadModel(const std::string& filePath, const std::shared_ptr<Material> material, const Point3& position = Point3(0, 0, 0), float scale = 1.0f)
+{
+    std::ifstream file(filePath);
+    if (!file.is_open())
+    {
+        std::cerr << "Error: unable to open file: " << filePath << std::endl;
+        return;
+    }
+
+    HittableList triangles;
+    std::vector<Point3> m_vertices;
+    std::string line;
+    while (getline(file, line))
+    {
+        if (line.size() < 2)
+            continue;
+        if (line[0] == 'v' && line[1] == ' ')
+        {
+            Point3 p;
+            sscanf(line.c_str(), "v %f %f %f", &p.x(), &p.y(), &p.z());
+            p *= scale;
+            p += position;
+            m_vertices.push_back(p);
+        }
+        else if (line[0] == 'f' && line[1] == ' ')
+        {
+            int v0, v1, v2;
+            sscanf(line.c_str(), "f %d %d %d", &v0, &v1, &v2);
+            assert(v0 >= 1 && v1 >= 1 && v2 >= 1);
+            assert(v0 <= m_vertices.size() && v1 <= m_vertices.size() && v2 <= m_vertices.size());
+
+            Point3 p0 = m_vertices[v0-1];
+            Point3 p1 = m_vertices[v1-1];
+            Point3 p2 = m_vertices[v2-1];
+
+            triangles.add(std::make_shared<Triangle>(p0, p1, p2, material));
+        }
+    }
+    m_objects.add(std::make_shared<BVHNode>(triangles));
+
+    file.close();
+}
+

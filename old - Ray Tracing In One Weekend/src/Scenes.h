@@ -3,6 +3,7 @@
 #include "RayTracer.h"
 #include "hittable/Sphere.h"
 #include "hittable/Quad.h"
+#include "hittable/Triangle.h"
 #include "hittable/ConstantMedium.h"
 #include "hittable/BVH.h"
 #include "texture/CheckerTexture.h"
@@ -14,10 +15,10 @@
 #include "materials/Dielectric.h"
 #include "materials/DiffuseLight.h"
 
-void example1()
+void example1(int samplesPerPixel)
 {
     RayTracerSettings settings;
-    settings.SamplesPerPixel = 100;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.LookFrom = Point3(-2, 2, 1);
     settings.Camera.LookAt = Point3(0, 0, -1);
@@ -40,12 +41,13 @@ void example1()
     tracer.addObject(std::make_shared<Sphere>(Point3(-1.0, 0.0, -1.0), 0.4, materialBubble));
     tracer.addObject(std::make_shared<Sphere>(Point3(1.0, 0.0, -1.0), 0.5, materialRight));
 
-    tracer.render("output/example1.png");
+    tracer.render("output/example1_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void example2()
+void example2(int samplesPerPixel)
 {
     RayTracerSettings settings;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.Background = Color(0.70, 0.80, 1.00);
     RayTracer tracer(settings);
 
@@ -57,14 +59,14 @@ void example2()
     tracer.addObject(std::make_shared<Sphere>(Point3(-R, 0, -1), R, material_left));
     tracer.addObject(std::make_shared<Sphere>(Point3(R, 0, -1), R, material_right));
 
-    tracer.render("output/example2.png");
+    tracer.render("output/example2_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void finalScene()
+void finalScene(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.Width = 1200;
-    settings.SamplesPerPixel = 500;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 20;
     settings.Camera.LookFrom = Point3(13, 2, 3);
@@ -123,14 +125,14 @@ void finalScene()
     auto material3 = std::make_shared<Metal>(Color(0.7, 0.6, 0.5), 0.0);
     tracer.addObject(std::make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
 
-    tracer.render("output/final_scene.png");
+    tracer.render("output/final_scene_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void bouncingBalls()
+void bouncingBalls(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.Width = 400;
-    settings.SamplesPerPixel = 100;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 20;
     settings.Camera.LookFrom = Point3(13, 2, 3);
@@ -190,14 +192,14 @@ void bouncingBalls()
     auto material3 = std::make_shared<Metal>(Color(0.7, 0.6, 0.5), 0.0);
     tracer.addObject(std::make_shared<Sphere>(Point3(4, 1, 0), 1.0, material3));
 
-    tracer.render("output/bouncing_balls.png");
+    tracer.render("output/bouncing_balls_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void checkeredSpheres()
+void checkeredSpheres(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.Width = 400;
-    settings.SamplesPerPixel = 100;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 20;
     settings.Camera.LookFrom = Point3(13, 2, 3);
@@ -211,14 +213,14 @@ void checkeredSpheres()
     tracer.addObject(std::make_shared<Sphere>(Point3(0, -10, 0), 10, std::make_shared<Lambertian>(checker)));
     tracer.addObject(std::make_shared<Sphere>(Point3(0, 10, 0), 10, std::make_shared<Lambertian>(checker)));
 
-    tracer.render("output/checkered_balls.png");
+    tracer.render("output/checkered_balls_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void earth()
+void earth(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.Width = 400;
-    settings.SamplesPerPixel = 100;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 20;
     settings.Camera.LookFrom = Point3(0, 0, 12);
@@ -232,14 +234,14 @@ void earth()
     auto globe = std::make_shared<Sphere>(Point3(0, 0, 0), 2, earthSurface);
     tracer.addObject(globe);
 
-    tracer.render("output/earth.png");
+    tracer.render("output/earth_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void imageSphere(const std::string& imagePath)
+void imageSphere(int samplesPerPixel, const std::string& imagePath)
 {
     RayTracerSettings settings;
     settings.Width = 400;
-    settings.SamplesPerPixel = 100;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 20;
     settings.Camera.LookFrom = Point3(12, 0, 0);
@@ -253,14 +255,14 @@ void imageSphere(const std::string& imagePath)
     auto globe = std::make_shared<Sphere>(Point3(0, 0, 0), 2, earthSurface);
     tracer.addObject(globe);
 
-    tracer.render("output/image_sphere.png");
+    tracer.render("output/image_sphere_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void perlinSpheres()
+void perlinSpheres(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.Width = 400;
-    settings.SamplesPerPixel = 100;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 20;
     settings.Camera.LookFrom = Point3(13, 2, 3);
@@ -273,15 +275,15 @@ void perlinSpheres()
     tracer.addObject(std::make_shared<Sphere>(Point3(0, -1000, 0), 1000, std::make_shared<Lambertian>(pertext)));
     tracer.addObject(std::make_shared<Sphere>(Point3(0, 2, 0), 2, std::make_shared<Lambertian>(pertext)));
 
-    tracer.render("output/perlin_spheres.png");
+    tracer.render("output/perlin_spheres_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void quads()
+void quads(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.AspectRatio = 1.0f;
     settings.Width = 400;
-    settings.SamplesPerPixel = 100;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 80;
     settings.Camera.LookFrom = Point3(0, 0, 9);
@@ -304,14 +306,14 @@ void quads()
     tracer.addObject(std::make_shared<Quad>(Point3(-2, 3, 1), Vec3(4, 0, 0), Vec3(0, 0, 4), upper_orange));
     tracer.addObject(std::make_shared<Quad>(Point3(-2, -3, 5), Vec3(4, 0, 0), Vec3(0, 0, -4), lower_teal));
 
-    tracer.render("output/quads.png");
+    tracer.render("output/quads_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void simpleLight()
+void simpleLight(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.Width = 400;
-    settings.SamplesPerPixel = 100;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 20;
     settings.Camera.LookFrom = Point3(26, 3, 6);
@@ -327,15 +329,15 @@ void simpleLight()
     tracer.addObject(std::make_shared<Sphere>(Point3(0, 7, 0), 2, difflight));
     tracer.addObject(std::make_shared<Quad>(Point3(3, 1, -2), Vec3(2, 0, 0), Vec3(0, 2, 0), difflight));
 
-    tracer.render("output/simple_light.png");
+    tracer.render("output/simple_light_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void cornellBox()
+void cornellBox(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.AspectRatio = 1.0f;
     settings.Width = 600;
-    settings.SamplesPerPixel = 200;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 40;
     settings.Camera.LookFrom = Point3(278, 278, -800);
@@ -365,15 +367,15 @@ void cornellBox()
     box2 = std::make_shared<Translate>(box2, Vec3(130, 0, 65));
     tracer.addObject(box2);
 
-    tracer.render("output/cornell_box.png");
+    tracer.render("output/cornell_box_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void cornellSmoke()
+void cornellSmoke(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.AspectRatio = 1.0f;
     settings.Width = 600;
-    settings.SamplesPerPixel = 200;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 40;
     settings.Camera.LookFrom = Point3(278, 278, -800);
@@ -404,10 +406,10 @@ void cornellSmoke()
     tracer.addObject(std::make_shared<ConstantMedium>(box1, 0.01, Color(0, 0, 0)));
     tracer.addObject(std::make_shared<ConstantMedium>(box2, 0.01, Color(1, 1, 1)));
 
-    tracer.render("output/cornell_smoke.png");
+    tracer.render("output/cornell_smoke_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void finalScene2(int imageWidth, int samplesPerPixel, int maxDepth)
+void finalScene2(int samplesPerPixel, int imageWidth, int maxDepth)
 {
     RayTracerSettings settings;
     settings.AspectRatio = 1.0f;
@@ -484,12 +486,12 @@ void finalScene2(int imageWidth, int samplesPerPixel, int maxDepth)
     tracer.render("output/final_scene2_" + std::to_string(imageWidth) + "_" + std::to_string(samplesPerPixel) + "_" + std::to_string(maxDepth) + ".png");
 }
 
-void cornellBoxBook3()
+void cornellBoxBook3(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.AspectRatio = 1.0f;
     settings.Width = 600;
-    settings.SamplesPerPixel = 1000;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 40;
     settings.Camera.LookFrom = Point3(278, 278, -800);
@@ -521,15 +523,15 @@ void cornellBoxBook3()
 
     tracer.addLight(std::make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), std::shared_ptr<Material>()));
 
-    tracer.render("output/cornell_box_book_3.png");
+    tracer.render("output/cornell_box_book_3_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void cornellBoxAlluminium()
+void cornellBoxAlluminium(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.AspectRatio = 1.0f;
     settings.Width = 600;
-    settings.SamplesPerPixel = 1000;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 40;
     settings.Camera.LookFrom = Point3(278, 278, -800);
@@ -562,15 +564,15 @@ void cornellBoxAlluminium()
 
     tracer.addLight(std::make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), std::shared_ptr<Material>()));
 
-    tracer.render("output/cornell_box_alluminium.png");
+    tracer.render("output/cornell_box_alluminium_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void cornellBoxGlassSphere()
+void cornellBoxGlassSphere(int samplesPerPixel)
 {
     RayTracerSettings settings;
     settings.AspectRatio = 1.0f;
     settings.Width = 600;
-    settings.SamplesPerPixel = 1000;
+    settings.SamplesPerPixel = samplesPerPixel;
     settings.MaxDepth = 50;
     settings.Camera.VFOV = 40;
     settings.Camera.LookFrom = Point3(278, 278, -800);
@@ -608,10 +610,10 @@ void cornellBoxGlassSphere()
     tracer.addLight(std::make_shared<Quad>(Point3(343, 554, 332), Vec3(-130, 0, 0), Vec3(0, 0, -105), emptyMaterial));
     tracer.addLight(std::make_shared<Sphere>(Point3(190, 90, 190), 90, emptyMaterial));
 
-    tracer.render("output/cornell_box_glass_sphere.png");
+    tracer.render("output/cornell_box_glass_sphere_" + std::to_string(samplesPerPixel) + ".png");
 }
 
-void finalScene2WithImportance(int imageWidth, int samplesPerPixel, int maxDepth)
+void finalScene2WithImportance(int samplesPerPixel, int imageWidth, int maxDepth)
 {
     RayTracerSettings settings;
     settings.AspectRatio = 1.0f;
@@ -690,4 +692,92 @@ void finalScene2WithImportance(int imageWidth, int samplesPerPixel, int maxDepth
     tracer.addLight(std::make_shared<Quad>(Point3(423, 554, 412), Vec3(-300, 0, 0), Vec3(0, 0, -265), emptyMaterial));
 
     tracer.render("output/final_scene2_Importance_" + std::to_string(imageWidth) + "_" + std::to_string(samplesPerPixel) + "_" + std::to_string(maxDepth) + ".png");
+}
+
+void triangles(int samplesPerPixel)
+{
+    RayTracerSettings settings;
+    settings.AspectRatio = 1.0f;
+    settings.Width = 400;
+    settings.SamplesPerPixel = samplesPerPixel;
+    settings.MaxDepth = 50;
+    settings.Camera.VFOV = 80;
+    settings.Camera.LookFrom = Point3(0, 0, -3);
+    settings.Camera.LookAt = Point3(0, 0, 0);
+    settings.Camera.UpVec = Vec3(0, 1, 0);
+    settings.Background = Color(0.70, 0.80, 1.00);
+    RayTracer tracer(settings);
+
+    // Materials
+    auto red = std::make_shared<Lambertian>(Color(1.0, 0.0, 0.0));
+    auto green = std::make_shared<Lambertian>(Color(0.0, 1.0, 0.0));
+    auto blue = std::make_shared<Lambertian>(Color(0.0, 0.0, 1.0));
+    auto yellow = std::make_shared<Lambertian>(Color(1.0, 1.0, 0.0));
+    auto cyan = std::make_shared<Lambertian>(Color(0.0, 1.0, 1.0));
+    auto magenta = std::make_shared<Lambertian>(Color(1.0, 0.0, 1.0));
+    auto white = std::make_shared<Lambertian>(Color(1.0, 1.0, 1.0));
+    auto black = std::make_shared<Lambertian>(Color(0.0, 0.0, 0.0));
+    auto brown = std::make_shared<Lambertian>(Color(0.6, 0.3, 0.1));
+    auto grey = std::make_shared<Lambertian>(Color(0.5, 0.5, 0.5));
+
+    // Triangles
+    auto v0 = Point3(-1, -1, 1);
+    auto v1 = Point3(1, -1, 1);
+    auto v2 = Point3(1, 1, 1);
+    auto v3 = Point3(-1, 1, 1);
+    auto v4 = Point3(-1, -1, -1);
+    auto v5 = Point3(1, -1, -1);
+    auto v6 = Point3(1, 1, -1);
+    auto v7 = Point3(-1, 1, -1);
+
+    // back face
+    tracer.addObject(std::make_shared<Triangle>(v0, v1, v2, red));
+    tracer.addObject(std::make_shared<Triangle>(v2, v3, v0, green));
+
+    // top face
+    tracer.addObject(std::make_shared<Triangle>(v2, v3, v6, yellow));
+    tracer.addObject(std::make_shared<Triangle>(v6, v7, v3, blue));
+
+    // right face
+    tracer.addObject(std::make_shared<Triangle>(v1, v5, v6, cyan));
+    tracer.addObject(std::make_shared<Triangle>(v6, v2, v1, magenta));
+
+    // left face
+    tracer.addObject(std::make_shared<Triangle>(v7, v3, v0, white));
+    tracer.addObject(std::make_shared<Triangle>(v0, v4, v7, black));
+
+    // bottom face
+    tracer.addObject(std::make_shared<Triangle>(v4, v5, v0, brown));
+    tracer.addObject(std::make_shared<Triangle>(v0, v1, v5, grey));
+
+
+    tracer.render("output/triangles_" + std::to_string(samplesPerPixel) + ".png");
+}
+void bunny(int samplesPerPixel)
+{
+    RayTracerSettings settings;
+    settings.AspectRatio = 1.0f;
+    settings.Width = 600;
+    settings.SamplesPerPixel = samplesPerPixel;
+    settings.MaxDepth = 50;
+    settings.Camera.VFOV = 80;
+    settings.Camera.LookFrom = Point3(0, 2, 2);
+    settings.Camera.LookAt = Point3(0, 0.5, 0);
+    settings.Camera.UpVec = Vec3(0, 1, 0);
+    settings.Background = Color(0.70, 0.80, 1.00);
+    RayTracer tracer(settings);
+
+    // Materials
+    auto bunnyMat = std::make_shared<Metal>(Color(0.0, 0.5, 0.3), 0.0f);
+    auto planeMat = std::make_shared<Lambertian>(Color(0.3, 0.3, 0.3));
+
+    // Objects
+    auto plane = std::make_shared<Quad>(Point3(-10, 0, -10), Vec3(20, 0, 0), Vec3(0, 0, 20), planeMat);
+
+    // Add Objects
+    tracer.loadModel("assets/stanford-bunny.obj", bunnyMat, { 0, 0, 0 }, 8);
+    tracer.addObject(plane);
+
+    // Render
+    tracer.render("output/bunny_" + std::to_string(samplesPerPixel) + ".png");
 }
